@@ -27,6 +27,34 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* Right Eye Input Section - Light Blue Background */
+.eye-section.right-eye {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+/* Left Eye Input Section - Light Green Background */
+.eye-section.left-eye {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-left: 4px solid #10b981;
+}
+
+.vision-subsection.right-eye {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  border-left: 4px solid #3b82f6;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.vision-subsection.left-eye {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-left: 4px solid #10b981;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
 .eye-header {
   margin-bottom: 20px;
 }
@@ -321,6 +349,18 @@
   padding: 24px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Right Eye - Light Blue Background */
+.eye-results.right-eye {
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+/* Left Eye - Light Green Background */
+.eye-results.left-eye {
+  background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
+  border-left: 4px solid #10b981;
 }
 
 .eye-results-title {

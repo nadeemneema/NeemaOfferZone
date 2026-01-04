@@ -331,7 +331,7 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
         {!requiresAdd ? (
           <>
             {/* Single Vision - Right Eye Section */}
-            <div className="eye-section">
+            <div className="eye-section right-eye">
               <div className="eye-header">
                 <h3 className="eye-title">Right Eye (OD)</h3>
               </div>
@@ -397,7 +397,7 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
             </div>
 
             {/* Single Vision - Left Eye Section */}
-            <div className="eye-section">
+            <div className="eye-section left-eye">
               <div className="eye-header">
                 <h3 className="eye-title">Left Eye (OS)</h3>
               </div>
@@ -465,7 +465,7 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
         ) : (
           <>
             {/* Progressive - Right Eye Section */}
-            <div className="eye-section">
+            <div className="eye-section right-eye">
               <div className="eye-header">
                 <h3 className="eye-title">Right Eye (OD)</h3>
               </div>
@@ -535,7 +535,7 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
 
               {/* NV Section */}
               <div className="vision-subsection">
-                <h4 className="subsection-title">Near Vision (NV)</h4>
+                <h4 className="subsection-title">Near Vision (NV) - RE</h4>
                 <div className="input-grid">
                   <div className="input-group">
                     <label htmlFor="right-nv-sph" className="input-label">
@@ -597,8 +597,8 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
               </div>
 
               {/* ADD Section */}
-              <div className="vision-subsection">
-                <h4 className="subsection-title">Addition Power (ADD)</h4>
+              <div className="vision-subsection right-eye">
+                <h4 className="subsection-title">Addition Power (ADD) - RE</h4>
                 <div className="input-grid">
                   <div className="input-group">
                     <label htmlFor="right-add" className="input-label">
@@ -623,7 +623,7 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
             </div>
 
             {/* Progressive - Left Eye Section */}
-            <div className="eye-section">
+            <div className="eye-section left-eye">
               <div className="eye-header">
                 <h3 className="eye-title">Left Eye (OS)</h3>
               </div>
@@ -693,7 +693,7 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
 
               {/* NV Section */}
               <div className="vision-subsection">
-                <h4 className="subsection-title">Near Vision (NV)</h4>
+                <h4 className="subsection-title">Near Vision (NV) - LE</h4>
                 <div className="input-grid">
                   <div className="input-group">
                     <label htmlFor="left-nv-sph" className="input-label">
@@ -755,8 +755,8 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
               </div>
 
               {/* ADD Section */}
-              <div className="vision-subsection">
-                <h4 className="subsection-title">Addition Power (ADD)</h4>
+              <div className="vision-subsection left-eye">
+                <h4 className="subsection-title">Addition Power (ADD) - LE</h4>
                 <div className="input-grid">
                   <div className="input-group">
                     <label htmlFor="left-add" className="input-label">
@@ -929,7 +929,7 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
               <>
             {/* Right Eye Results */}
             {(requiresAdd ? matchedResults[selectedLensType]?.rightEye : matchedResults.rightEye) && (
-              <div className="eye-results">
+              <div className="eye-results right-eye">
                 <h4 className="eye-results-title">Right Eye (OD)</h4>
                 <div className="results-content">
                   <div className="prescription-summary">
@@ -1004,7 +1004,7 @@ const PrescriptionForm = ({ powerType, onBack, onContinue }) => {
 
             {/* Left Eye Results */}
             {(requiresAdd ? matchedResults[selectedLensType]?.leftEye : matchedResults.leftEye) && (
-              <div className="eye-results">
+              <div className="eye-results left-eye">
                 <h4 className="eye-results-title">Left Eye (OS)</h4>
                 <div className="results-content">
                   <div className="prescription-summary">
