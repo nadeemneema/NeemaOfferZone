@@ -34,20 +34,28 @@ function App() {
     
     if (powerType === 'with-power' || powerType === 'progressive') {
       setCurrentStep('prescription');
+      // Scroll to top after step change
+      window.scrollTo(0, 0);
     }
     // Handle other power types later
   };
 
   const handleBackToPowerType = () => {
     setCurrentStep('power-type');
+    // Scroll to top after step change
+    window.scrollTo(0, 0);
   };
 
   const handleBackToFrames = () => {
     setCurrentStep('frames');
+    // Scroll to top after step change
+    window.scrollTo(0, 0);
   };
 
   const handleFramesContinue = () => {
     setCurrentStep('power-type');
+    // Scroll to top after step change
+    window.scrollTo(0, 0);
   };
 
   const handleFrameSelectionChange = (frames) => {
@@ -74,6 +82,8 @@ function App() {
       setConfiguringFrame('frame2');
     }
     setCurrentStep('frames');
+    // Scroll to top after step change
+    window.scrollTo(0, 0);
   };
 
   return (

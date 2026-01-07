@@ -309,6 +309,7 @@ const PrescriptionForm = ({
     // When on frame selection (step 1), navigate to power type (step 2)
     if (showFrameSelection) {
       onContinue();
+      window.scrollTo(0, 0);
       return;
     }
     
@@ -353,6 +354,7 @@ const PrescriptionForm = ({
     }
     
     setShowLensSelection(true);
+    window.scrollTo(0, 0);
   };
 
   const handleLensSelection = (lensOption) => {
@@ -372,6 +374,8 @@ const PrescriptionForm = ({
     
     // Navigate to cart page
     setShowCart(true);
+    // Scroll to top when showing cart
+    window.scrollTo(0, 0);
   };
 
   const handleCouponChange = (e) => {
@@ -485,7 +489,7 @@ const PrescriptionForm = ({
       <div className="prescription-form">
         {/* Header */}
         <header className="header">
-          <button className="back-button" onClick={() => setShowCart(false)}>
+          <button className="back-button" onClick={() => { setShowCart(false); window.scrollTo(0, 0); }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -777,7 +781,7 @@ const PrescriptionForm = ({
       <div className="prescription-form">
         {/* Header */}
         <header className="header">
-          <button className="back-button" onClick={() => setShowLensSelection(false)}>
+          <button className="back-button" onClick={() => { setShowLensSelection(false); window.scrollTo(0, 0); }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
