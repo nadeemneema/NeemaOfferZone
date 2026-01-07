@@ -16,7 +16,9 @@ const transposePrescription = (sph, cyl, axis) => {
  */
 const mapAxisToStandard = (axis) => {
   const axisNum = parseInt(axis) || 0;
-  if (axisNum === 0) return 0;
+  
+  // Special case: axis 0 is equivalent to 180 in optics
+  if (axisNum === 0) return 180;
   
   const standards = [45, 90, 135, 180];
   return standards.reduce((prev, curr) => 
@@ -142,7 +144,17 @@ const matchesCylRange = (sph, cyl, axis, rangeStr) => {
   
   // For CYL ranges, SPH should be close to 0 (within tolerance)
   const sphNearZero = Math.abs(sphVal) <= 1.0;
-  const cylMatch = Math.abs(cylVal - rangeCyl) <= 1.0;
+  
+  // Use category-based matching: round up the absolute cylinder value
+  // Example: CYL -0.5 → ceil(0.5) = 1, matches range -2 since 1 <= 2
+  const cylCategory = Math.ceil(Math.abs(cylVal));
+  const rangeCylCategory = Math.abs(rangeCyl);
+  
+  // Check signs match (or value is near zero)
+  const cylSignMatch = (cylVal >= 0 && rangeCyl >= 0) || (cylVal < 0 && rangeCyl < 0) || (Math.abs(cylVal) < 0.25);
+  
+  // Match if actual cylinder category is less than or equal to range category
+  const cylMatch = cylCategory <= rangeCylCategory && cylSignMatch;
   const axisMatch = axisVal === rangeAxis;
   
   return sphNearZero && cylMatch && axisMatch;
@@ -174,19 +186,20 @@ const matchesCompRange = (sph, cyl, axis, rangeStr) => {
     rangeAxis = parseInt(axisMatch[1]);
   }
   
-  // Use category-based matching for SPH and CYL
-  // Round to nearest integer category for comparison
-  const sphCategory = Math.round(Math.abs(sphVal));
-  const cylCategory = Math.round(Math.abs(cylVal));
-  const rangeSphCategory = Math.round(Math.abs(rangeSph));
-  const rangeCylCategory = Math.round(Math.abs(rangeCyl));
+  // Use category-based matching for SPH and CYL with tolerance
+  // Round up values to match the range categories
+  const sphCategory = Math.ceil(Math.abs(sphVal));
+  const cylCategory = Math.ceil(Math.abs(cylVal));
+  const rangeSphCategory = Math.abs(rangeSph);
+  const rangeCylCategory = Math.abs(rangeCyl);
   
-  // Check signs match
-  const sphSignMatch = (sphVal >= 0 && rangeSph >= 0) || (sphVal < 0 && rangeSph < 0) || (Math.abs(sphVal) < 0.5);
-  const cylSignMatch = (cylVal >= 0 && rangeCyl >= 0) || (cylVal < 0 && rangeCyl < 0) || (Math.abs(cylVal) < 0.5);
+  // Check signs match (or value is near zero)
+  const sphSignMatch = (sphVal >= 0 && rangeSph >= 0) || (sphVal < 0 && rangeSph < 0) || (Math.abs(sphVal) < 0.25);
+  const cylSignMatch = (cylVal >= 0 && rangeCyl >= 0) || (cylVal < 0 && rangeCyl < 0) || (Math.abs(cylVal) < 0.25);
   
-  const sphMatch = sphCategory === rangeSphCategory && sphSignMatch;
-  const cylMatch = cylCategory === rangeCylCategory && cylSignMatch;
+  // Match if actual value is less than or equal to range category
+  const sphMatch = sphCategory <= rangeSphCategory && sphSignMatch;
+  const cylMatch = cylCategory <= rangeCylCategory && cylSignMatch;
   
   if (rangeAxis === 0) {
     return sphMatch && cylMatch;
@@ -229,16 +242,16 @@ const tryMatchPrescription = (sph, cyl, axis, brandData, isBifocal = false, isPr
   
   // For bifocal: Check different categories based on prescription type
   if (isBifocal) {
-    // If SPH is near zero and CYL is present, check CYL_KT first
-    if (Math.abs(sphVal) <= 1.0 && cylVal !== 0 && brandData.CYL_KT) {
-      const match = brandData.CYL_KT.find(item => matchesCylRange(sph, cyl, axis, item.range));
-      if (match) return { category: 'CYL_KT', subcategory: 'CYL_KT', match };
-    }
-    
-    // If both SPH and CYL are present, check COMP_KT
-    if (Math.abs(sphVal) > 1.0 && cylVal !== 0 && brandData.COMP_KT) {
+    // If both SPH and CYL are present, check COMP_KT first
+    if (Math.abs(sphVal) >= 0.25 && cylVal !== 0 && brandData.COMP_KT) {
       const match = brandData.COMP_KT.find(item => matchesCompRange(sph, cyl, axis, item.range));
       if (match) return { category: 'COMP_KT', subcategory: 'COMP_KT', match };
+    }
+    
+    // If SPH is near zero and CYL is present, check CYL_KT
+    if (Math.abs(sphVal) < 0.25 && cylVal !== 0 && brandData.CYL_KT) {
+      const match = brandData.CYL_KT.find(item => matchesCylRange(sph, cyl, axis, item.range));
+      if (match) return { category: 'CYL_KT', subcategory: 'CYL_KT', match };
     }
     
     // Otherwise check Bifocal KT (SPH only)
@@ -250,16 +263,16 @@ const tryMatchPrescription = (sph, cyl, axis, brandData, isBifocal = false, isPr
   
   // For progressive: prioritize Progressive categories
   if (isProgressive) {
-    // If SPH is near zero and CYL is present, check PROGRESSIVE__CYL first
-    if (Math.abs(sphVal) <= 1.0 && cylVal !== 0 && brandData.PROGRESSIVE__CYL) {
-      const match = brandData.PROGRESSIVE__CYL.find(item => matchesCylRange(sph, cyl, axis, item.range));
-      if (match) return { category: 'PROGRESSIVE__CYL', subcategory: 'PROGRESSIVE__CYL', match };
-    }
-    
-    // Try PROGRESSIVE_COMP for compound (SPH > 1 with CYL)
-    if (Math.abs(sphVal) > 1.0 && cylVal !== 0 && brandData.PROGRESSIVE_COMP) {
+    // Try PROGRESSIVE_COMP first for any SPH+CYL combination
+    if (Math.abs(sphVal) >= 0.25 && cylVal !== 0 && brandData.PROGRESSIVE_COMP) {
       const match = brandData.PROGRESSIVE_COMP.find(item => matchesCompRange(sph, cyl, axis, item.range));
       if (match) return { category: 'PROGRESSIVE_COMP', subcategory: 'PROGRESSIVE_COMP', match };
+    }
+    
+    // If SPH is near zero and CYL is present, check PROGRESSIVE__CYL
+    if (Math.abs(sphVal) < 0.25 && cylVal !== 0 && brandData.PROGRESSIVE__CYL) {
+      const match = brandData.PROGRESSIVE__CYL.find(item => matchesCylRange(sph, cyl, axis, item.range));
+      if (match) return { category: 'PROGRESSIVE__CYL', subcategory: 'PROGRESSIVE__CYL', match };
     }
     
     // Try PROGRESSIVE_SPH for SPH-only or as fallback

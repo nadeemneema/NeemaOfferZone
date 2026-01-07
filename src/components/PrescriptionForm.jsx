@@ -30,22 +30,22 @@ const PrescriptionForm = ({
   
   const [prescriptionData, setPrescriptionData] = useState(existingPrescription || {
     rightEye: requiresAdd ? {
-      dv: { sph: '', cyl: '', axis: '' },
-      nv: { sph: '', cyl: '', axis: '' },
-      add: ''
+      dv: { sph: '0.00', cyl: '0.00', axis: '0' },
+      nv: { sph: '0.00', cyl: '0.00', axis: '0' },
+      add: '0.00'
     } : {
-      sph: '',
-      cyl: '',
-      axis: ''
+      sph: '0.00',
+      cyl: '0.00',
+      axis: '0'
     },
     leftEye: requiresAdd ? {
-      dv: { sph: '', cyl: '', axis: '' },
-      nv: { sph: '', cyl: '', axis: '' },
-      add: ''
+      dv: { sph: '0.00', cyl: '0.00', axis: '0' },
+      nv: { sph: '0.00', cyl: '0.00', axis: '0' },
+      add: '0.00'
     } : {
-      sph: '',
-      cyl: '',
-      axis: ''
+      sph: '0.00',
+      cyl: '0.00',
+      axis: '0'
     }
   });
 
@@ -1470,6 +1470,46 @@ const PrescriptionForm = ({
     }
   };
 
+  // Check if prescription is within valid range for single vision: SPH -8/+6, CYL -4/+4
+  const isPrescriptionInRange = () => {
+    if (requiresAdd) {
+      // For progressive/bifocal, no range restriction
+      return true;
+    }
+    
+    // For single vision, check if values are within range
+    const rightSph = parseFloat(prescriptionData.rightEye.sph) || 0;
+    const rightCyl = parseFloat(prescriptionData.rightEye.cyl) || 0;
+    const leftSph = parseFloat(prescriptionData.leftEye.sph) || 0;
+    const leftCyl = parseFloat(prescriptionData.leftEye.cyl) || 0;
+    
+    // Check SPH range: -8 to +6
+    const sphInRange = (rightSph >= -8 && rightSph <= 6) && (leftSph >= -8 && leftSph <= 6);
+    
+    // Check CYL range: -4 to +4
+    const cylInRange = (rightCyl >= -4 && rightCyl <= 4) && (leftCyl >= -4 && leftCyl <= 4);
+    
+    return sphInRange && cylInRange;
+  };
+
+  // Calculate transposed prescription
+  const getTransposedPrescription = (sph, cyl, axis) => {
+    const sphVal = parseFloat(sph) || 0;
+    const cylVal = parseFloat(cyl) || 0;
+    const axisVal = parseInt(axis) || 0;
+    
+    if (cylVal === 0) {
+      return { sph: sphVal.toFixed(2), cyl: '0.00', axis: '0' };
+    }
+    
+    const newSph = (sphVal + cylVal).toFixed(2);
+    const newCyl = (-cylVal).toFixed(2);
+    let newAxis = axisVal + 90;
+    if (newAxis > 180) newAxis -= 180;
+    
+    return { sph: newSph, cyl: newCyl, axis: newAxis.toString() };
+  };
+
   return (
     <div className="prescription-container">
       {/* Header */}
@@ -2064,13 +2104,15 @@ const PrescriptionForm = ({
             Check Available Options & Prices
           </button>
 
-          <button 
-            className="check-button continue-button" 
-            onClick={handleContinueToFrames}
-            disabled={!isFormValid()}
-          >
-            Continue
-          </button>
+          {isPrescriptionInRange() && (
+            <button 
+              className="check-button continue-button" 
+              onClick={handleContinueToFrames}
+              disabled={!isFormValid()}
+            >
+              Continue
+            </button>
+          )}
           
           <button 
             className="clear-button" 
@@ -2122,6 +2164,32 @@ const PrescriptionForm = ({
                       Range: {matchedResults[selectedLensType].rightEye.range}
                     </span>
                   </div>
+                  {transposeValues(
+                    matchedResults[selectedLensType].rightEye.prescription.sph,
+                    matchedResults[selectedLensType].rightEye.prescription.cyl,
+                    matchedResults[selectedLensType].rightEye.prescription.axis
+                  ) && (
+                    <div className="prescription-summary transposed">
+                      <span className="summary-label">Right Eye Transposed:</span>
+                      <span className="summary-value">
+                        SPH: {transposeValues(
+                          matchedResults[selectedLensType].rightEye.prescription.sph,
+                          matchedResults[selectedLensType].rightEye.prescription.cyl,
+                          matchedResults[selectedLensType].rightEye.prescription.axis
+                        ).sph} | 
+                        CYL: {transposeValues(
+                          matchedResults[selectedLensType].rightEye.prescription.sph,
+                          matchedResults[selectedLensType].rightEye.prescription.cyl,
+                          matchedResults[selectedLensType].rightEye.prescription.axis
+                        ).cyl} | 
+                        AXIS: {transposeValues(
+                          matchedResults[selectedLensType].rightEye.prescription.sph,
+                          matchedResults[selectedLensType].rightEye.prescription.cyl,
+                          matchedResults[selectedLensType].rightEye.prescription.axis
+                        ).axis}°
+                      </span>
+                    </div>
+                  )}
                   <div className="prescription-summary">
                     <span className="summary-label">Left Eye (OS):</span>
                     <span className="summary-value">
@@ -2131,6 +2199,32 @@ const PrescriptionForm = ({
                       Range: {matchedResults[selectedLensType].leftEye.range}
                     </span>
                   </div>
+                  {transposeValues(
+                    matchedResults[selectedLensType].leftEye.prescription.sph,
+                    matchedResults[selectedLensType].leftEye.prescription.cyl,
+                    matchedResults[selectedLensType].leftEye.prescription.axis
+                  ) && (
+                    <div className="prescription-summary transposed">
+                      <span className="summary-label">Left Eye Transposed:</span>
+                      <span className="summary-value">
+                        SPH: {transposeValues(
+                          matchedResults[selectedLensType].leftEye.prescription.sph,
+                          matchedResults[selectedLensType].leftEye.prescription.cyl,
+                          matchedResults[selectedLensType].leftEye.prescription.axis
+                        ).sph} | 
+                        CYL: {transposeValues(
+                          matchedResults[selectedLensType].leftEye.prescription.sph,
+                          matchedResults[selectedLensType].leftEye.prescription.cyl,
+                          matchedResults[selectedLensType].leftEye.prescription.axis
+                        ).cyl} | 
+                        AXIS: {transposeValues(
+                          matchedResults[selectedLensType].leftEye.prescription.sph,
+                          matchedResults[selectedLensType].leftEye.prescription.cyl,
+                          matchedResults[selectedLensType].leftEye.prescription.axis
+                        ).axis}°
+                      </span>
+                    </div>
+                  )}
                   {getAveragedCoatings(matchedResults[selectedLensType].rightEye, matchedResults[selectedLensType].leftEye).length === 0 ? (
                     <div className="no-lens-warning">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="warning-icon">
@@ -2167,6 +2261,32 @@ const PrescriptionForm = ({
                       Range: {matchedResults.rightEye.range}
                     </span>
                   </div>
+                  {transposeValues(
+                    matchedResults.rightEye.prescription.sph,
+                    matchedResults.rightEye.prescription.cyl,
+                    matchedResults.rightEye.prescription.axis
+                  ) && (
+                    <div className="prescription-summary transposed">
+                      <span className="summary-label">Right Eye Transposed:</span>
+                      <span className="summary-value">
+                        SPH: {transposeValues(
+                          matchedResults.rightEye.prescription.sph,
+                          matchedResults.rightEye.prescription.cyl,
+                          matchedResults.rightEye.prescription.axis
+                        ).sph} | 
+                        CYL: {transposeValues(
+                          matchedResults.rightEye.prescription.sph,
+                          matchedResults.rightEye.prescription.cyl,
+                          matchedResults.rightEye.prescription.axis
+                        ).cyl} | 
+                        AXIS: {transposeValues(
+                          matchedResults.rightEye.prescription.sph,
+                          matchedResults.rightEye.prescription.cyl,
+                          matchedResults.rightEye.prescription.axis
+                        ).axis}°
+                      </span>
+                    </div>
+                  )}
                   <div className="prescription-summary">
                     <span className="summary-label">Left Eye (OS):</span>
                     <span className="summary-value">
@@ -2176,6 +2296,32 @@ const PrescriptionForm = ({
                       Range: {matchedResults.leftEye.range}
                     </span>
                   </div>
+                  {transposeValues(
+                    matchedResults.leftEye.prescription.sph,
+                    matchedResults.leftEye.prescription.cyl,
+                    matchedResults.leftEye.prescription.axis
+                  ) && (
+                    <div className="prescription-summary transposed">
+                      <span className="summary-label">Left Eye Transposed:</span>
+                      <span className="summary-value">
+                        SPH: {transposeValues(
+                          matchedResults.leftEye.prescription.sph,
+                          matchedResults.leftEye.prescription.cyl,
+                          matchedResults.leftEye.prescription.axis
+                        ).sph} | 
+                        CYL: {transposeValues(
+                          matchedResults.leftEye.prescription.sph,
+                          matchedResults.leftEye.prescription.cyl,
+                          matchedResults.leftEye.prescription.axis
+                        ).cyl} | 
+                        AXIS: {transposeValues(
+                          matchedResults.leftEye.prescription.sph,
+                          matchedResults.leftEye.prescription.cyl,
+                          matchedResults.leftEye.prescription.axis
+                        ).axis}°
+                      </span>
+                    </div>
+                  )}
                   {getAveragedCoatings(matchedResults.rightEye, matchedResults.leftEye).length === 0 ? (
                     <div className="no-lens-warning">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="warning-icon">
