@@ -86,9 +86,6 @@
             "Adjusted Lens Thickness",
             "UV Protection"
           ],
-          "additionalCoatings": {
-            "forPG": 800
-          },
           "price": {
             "current": 3200,
             "original": 3800,
@@ -105,11 +102,6 @@
             "Smudge & Scratch Resistant",
             "Water & Dust Repellent"
           ],
-          "additionalCoatings": {
-            "forPG": 1800,
-            "forARC": 800,
-            "forBluCut": 1800
-          },
           "price": {
             "current": 3800,
             "original": 6200,
