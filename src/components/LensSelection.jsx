@@ -125,7 +125,8 @@ const LensSelection = ({ onPowerTypeSelect, onBack, frameSelection, configuringF
             gap: '8px'
           }}>
             <span style={{fontSize: '20px'}}>
-              {frameSelection.frame1 === 'Pink' ? '🩷' :
+              {frameSelection.frame1 === 'White' ? '⚪' :
+               frameSelection.frame1 === 'Pink' ? '🩷' :
                frameSelection.frame1 === 'Red' ? '🔴' :
                frameSelection.frame1 === 'Orange' ? '🟠' :
                frameSelection.frame1 === 'Green' ? '🟢' :
@@ -149,7 +150,8 @@ const LensSelection = ({ onPowerTypeSelect, onBack, frameSelection, configuringF
             gap: '8px'
           }}>
             <span style={{fontSize: '20px'}}>
-              {frameSelection.frame2 === 'Pink' ? '🩷' :
+              {frameSelection.frame2 === 'White' ? '⚪' :
+               frameSelection.frame2 === 'Pink' ? '🩷' :
                frameSelection.frame2 === 'Red' ? '🔴' :
                frameSelection.frame2 === 'Orange' ? '🟠' :
                frameSelection.frame2 === 'Green' ? '🟢' :

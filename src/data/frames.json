@@ -16,6 +16,20 @@
       },
       "lensOptions": [
         {
+          "type": "Basic Hard Coat",
+          "features": [
+            "Basic Hard coating",
+            "Adjusted Lens Thickness"
+          ],
+          "warranty": "6 Months Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 1800,
+            "original": 2500,
+            "pairs": 2
+          }
+        },
+        {
           "type": "ANTI-GLARE Essentials",
           "features": [
             "Adjusted lens thickness",
@@ -208,6 +222,42 @@
         }
       },
       "membershipCharges": 200,
+      "frameOnlyPrice": 1000,
+      "zeroPowerLensOptions": [
+        {
+          "type": "BLU-CUT/BLU-GREEN",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 1500,
+            "original": 2500,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "BLU-CUT PREMIUM/NVG",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare",
+            "Smudge & Scratch resistant",
+            "Water & dust repellent",
+            "UV protection"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 1800,
+            "original": 2800,
+            "pairs": 2
+          }
+        }
+      ],
       "availability": true,
       "stock": 50
     },
@@ -226,6 +276,20 @@
         "bridge": "18mm"
       },
       "lensOptions": [
+        {
+          "type": "Basic Hard Coat",
+          "features": [
+            "Basic Hard coating",
+            "Adjusted Lens Thickness"
+          ],
+          "warranty": "6 Months Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 3000,
+            "original": 4000,
+            "pairs": 2
+          }
+        },
         {
           "type": "ANTI-GLARE Essentials",
           "features": [
@@ -427,6 +491,42 @@
         }
       },
       "membershipCharges": 200,
+      "frameOnlyPrice": 1500,
+      "zeroPowerLensOptions": [
+        {
+          "type": "BLU-CUT/BLU-GREEN",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 2000,
+            "original": 3000,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "BLU-CUT PREMIUM/NVG",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare",
+            "Smudge & Scratch resistant",
+            "Water & dust repellent",
+            "UV protection"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 2300,
+            "original": 3300,
+            "pairs": 2
+          }
+        }
+      ],
       "availability": true,
       "stock": 45
     },
@@ -646,6 +746,42 @@
         }
       },
       "membershipCharges": 200,
+      "frameOnlyPrice": 2000,
+      "zeroPowerLensOptions": [
+        {
+          "type": "BLU-CUT/BLU-GREEN",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 2500,
+            "original": 3500,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "BLU-CUT PREMIUM/NVG",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare",
+            "Smudge & Scratch resistant",
+            "Water & dust repellent",
+            "UV protection"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 2800,
+            "original": 3800,
+            "pairs": 2
+          }
+        }
+      ],
       "availability": true,
       "stock": 40
     },
@@ -865,6 +1001,42 @@
         }
       ],
       "membershipCharges": 200,
+      "frameOnlyPrice": 2500,
+      "zeroPowerLensOptions": [
+        {
+          "type": "BLU-CUT/BLU-GREEN",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 3000,
+            "original": 4000,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "BLU-CUT PREMIUM/NVG",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare",
+            "Smudge & Scratch resistant",
+            "Water & dust repellent",
+            "UV protection"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 3300,
+            "original": 4300,
+            "pairs": 2
+          }
+        }
+      ],
       "availability": true,
       "stock": 55
     },
@@ -1084,8 +1256,305 @@
         }
       },
       "membershipCharges": 200,
+      "frameOnlyPrice": 3500,
+      "zeroPowerLensOptions": [
+        {
+          "type": "BLU-CUT/BLU-GREEN",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 4000,
+            "original": 5000,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "BLU-CUT PREMIUM/NVG",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare",
+            "Smudge & Scratch resistant",
+            "Water & dust repellent",
+            "UV protection"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 4300,
+            "original": 5300,
+            "pairs": 2
+          }
+        }
+      ],
       "availability": true,
       "stock": 35
+    },
+    {
+      "id": "white-001",
+      "name": "White Frame",
+      "color": "White",
+      "category": "BOGO_OFFER",
+      "image": "/images/frames/white-frame.jpg",
+      "description": "Clean white frame for a modern look",
+      "material": "Acetate",
+      "shape": "Rectangle",
+      "size": {
+        "width": "140mm",
+        "height": "45mm",
+        "bridge": "18mm"
+      },
+      "lensOptions": [
+        {
+          "type": "Basic Hard Coat",
+          "features": [
+            "Basic Hard coating",
+            "Adjusted Lens Thickness"
+          ],
+          "warranty": "6 Months Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 1500,
+            "original": 2500,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "ANTI-GLARE Essentials",
+          "features": [
+            "Adjusted lens thickness",
+            "Double side anti-glare (High Coating), UV protect"
+          ],
+          "warranty": "6 Months Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 1800,
+            "original": 4200,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "BLU-CUT/BLU-GREEN",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Adjusted lens thickness",
+            "Double side anti-glare"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 2200,
+            "original": 4600,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "BLU-CUT PREMIUM/NVG",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Adjusted lens thickness",
+            "Double side anti-glare",
+            "Smudge & Scratch resistant",
+            "Water & dust repellent",
+            "UV protection"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 2500,
+            "original": 6000,
+            "pairs": 2
+          }
+        }
+      ],
+      "bifocalLensOptions": [
+        {
+          "type": "Circular Bi-Focal KT Hard Coat",
+          "features": [
+            "Basic Hard coating",
+            "Adjusted Lens Thickness"
+          ],
+          "additionalCoatings": {
+            "forPG": 800
+          },
+          "price": {
+            "current": 2800,
+            "original": 3500,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "Circular Bi-Focal KT Anti-Glare",
+          "features": [
+            "Anti-Glare Coating",
+            "Adjusted Lens Thickness",
+            "UV Protection"
+          ],
+          "price": {
+            "current": 3200,
+            "original": 3800,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "Circular Bi-Focal KT BLU-Cut",
+          "features": [
+            "Premium Anti-Glare Coating",
+            "Adjusted Lens Thickness",
+            "UV Protection",
+            "Blue Block Protection",
+            "Smudge & Scratch Resistant",
+            "Water & Dust Repellent"
+          ],
+          "price": {
+            "current": 3800,
+            "original": 6200,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "Circular Bi-Focal KT - Premium",
+          "features": [
+            "All Premium Coatings",
+            "UV Protection",
+            "Customised Precision Lenses",
+            "Smudge & Scratch Resistant",
+            "Water & Dust Repellent",
+            "Adjusts Quickly"
+          ],
+          "additionalCoatings": {
+            "forPG": 1800,
+            "forARC": 800,
+            "forBluCut": 1800
+          },
+          "price": {
+            "current": 4300,
+            "original": 8000,
+            "pairs": 2
+          }
+        }
+      ],
+      "progressiveLensOptions": [
+        {
+          "type": "Basic Normal Corridor Progressive",
+          "features": [
+            "Basic Hard coating",
+            "Adjusted Lens Thickness"
+          ],
+          "additionalCoatings": {
+            "forPG": 2500
+          },
+          "price": {
+            "current": 3500,
+            "original": 6000,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "Normal Corridor Anti-Glare Progressive",
+          "features": [
+            "Anti-Glare Coating",
+            "Adjusted Lens Thickness",
+            "UV Protection"
+          ],
+          "price": {
+            "current": 4200,
+            "original": 6800,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "Normal Corridor Blu-Cut Progressive",
+          "features": [
+            "Premium Anti-Glare Coating",
+            "Adjusted Lens Thickness",
+            "UV Protection",
+            "Blue Block Protection",
+            "Smudge & Scratch Resistant",
+            "Water & Dust Repellent"
+          ],
+          "price": {
+            "current": 5000,
+            "original": 8800,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "Wide Corridor Progressive - Premium",
+          "features": [
+            "All Premium Coatings",
+            "UV Protection",
+            "Customised Precision Lenses",
+            "Smudge & Scratch Resistant",
+            "Water & Dust Repellent",
+            "Adjusts Quickly"
+          ],
+          "additionalCoatings": {
+            "forPG": 4000,
+            "forARC": 1800,
+            "forBluCut": 2500
+          },
+          "price": {
+            "current": 5000,
+            "original": 8800,
+            "pairs": 2
+          }
+        }
+      ],
+      "powerRange": {
+        "sph": {
+          "min": -8,
+          "max": 6
+        },
+        "cyl": {
+          "min": -4,
+          "max": 4
+        }
+      },
+      "membershipCharges": 200,
+      "frameOnlyPrice": 900,
+      "zeroPowerLensOptions": [
+        {
+          "type": "BLU-CUT/BLU-GREEN",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 1400,
+            "original": 2400,
+            "pairs": 2
+          }
+        },
+        {
+          "type": "BLU-CUT PREMIUM/NVG",
+          "features": [
+            "Blue-Block & Anti-glare",
+            "Zero power lenses",
+            "Double side anti-glare",
+            "Smudge & Scratch resistant",
+            "Water & dust repellent",
+            "UV protection"
+          ],
+          "warranty": "1 Year Warranty",
+          "coupon": "SINGLE",
+          "price": {
+            "current": 1700,
+            "original": 2700,
+            "pairs": 2
+          }
+        }
+      ],
+      "availability": true,
+      "stock": 60
     }
   ]
 }

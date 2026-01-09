@@ -694,6 +694,23 @@
   background: #eff6ff;
 }
 
+/* Dull grey styling for Basic Hard Coat lens */
+.lens-card.basic-hard-coat {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+.lens-card.basic-hard-coat:hover {
+  background: #d1d5db;
+  border-color: #9ca3af;
+}
+
+.lens-card.basic-hard-coat.selected {
+  background: #d1d5db;
+  border-color: #3b82f6;
+}
+
+
 .lens-card-header {
   display: flex;
   justify-content: space-between;
@@ -787,6 +804,81 @@
 .feature-icon {
   font-size: 1rem;
   flex-shrink: 0;
+}
+
+/* Coating Badge Styles */
+.coating-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  flex-wrap: wrap;
+}
+
+.coating-badge-photochromatic {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+}
+
+.coating-badge-polycarbonate {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border: 1px solid #0ea5e9;
+}
+
+.coating-badge-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.coating-badge-text {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  word-break: break-word;
+}
+
+.coating-badge-photochromatic .coating-badge-text {
+  color: #92400e;
+}
+
+.coating-badge-polycarbonate .coating-badge-text {
+  color: #075985;
+}
+
+/* Responsive adjustments for badges */
+@media (max-width: 768px) {
+  .coating-badge {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    gap: 0.625rem;
+  }
+  
+  .coating-badge-icon {
+    font-size: 1rem;
+  }
+  
+  .coating-badge-text {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .coating-badge {
+    padding: 8px 14px;
+    font-size: 0.875rem;
+    gap: 0.625rem;
+  }
+  
+  .coating-badge-icon {
+    font-size: 1.1rem;
+  }
+  
+  .coating-badge-text {
+    font-size: 0.875rem;
+  }
 }
 
 .view-details-link {

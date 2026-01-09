@@ -27,12 +27,20 @@ function App() {
     
     // Store power type for the frame being configured
     if (configuringFrame === 'frame1') {
-      setFrame1Data(prev => ({ ...prev, powerType }));
+      setFrame1Data(prev => ({ ...prev, powerType, lens: powerType === 'frame-only' ? 'NO LENS' : prev.lens }));
     } else {
-      setFrame2Data(prev => ({ ...prev, powerType }));
+      setFrame2Data(prev => ({ ...prev, powerType, lens: powerType === 'frame-only' ? 'NO LENS' : prev.lens }));
     }
     
-    if (powerType === 'with-power' || powerType === 'progressive') {
+    if (powerType === 'frame-only') {
+      // Skip prescription and go directly to cart
+      setCurrentStep('cart');
+      window.scrollTo(0, 0);
+    } else if (powerType === 'zero-power') {
+      // Skip prescription and go directly to lens selection for zero power
+      setCurrentStep('prescription');
+      window.scrollTo(0, 0);
+    } else if (powerType === 'with-power' || powerType === 'progressive') {
       setCurrentStep('prescription');
       // Scroll to top after step change
       window.scrollTo(0, 0);
@@ -118,6 +126,22 @@ function App() {
           onBack={handleBackToPowerType}
           onContinue={handlePrescriptionContinue}
           initialView="prescription"
+          frameSelection={frameSelection}
+          onFrameSelectionChange={handleFrameSelectionChange}
+          onNavigateToFrames={handleNavigateToFrames}
+          configuringFrame={configuringFrame}
+          frame1Data={frame1Data}
+          frame2Data={frame2Data}
+          onFrame1DataChange={setFrame1Data}
+          onFrame2DataChange={setFrame2Data}
+        />
+      )}
+      {currentStep === 'cart' && (
+        <PrescriptionForm 
+          powerType={configuringFrame === 'frame1' ? frame1Data.powerType : frame2Data.powerType}
+          onBack={handleBackToFrames}
+          onContinue={handlePrescriptionContinue}
+          initialView="cart"
           frameSelection={frameSelection}
           onFrameSelectionChange={handleFrameSelectionChange}
           onNavigateToFrames={handleNavigateToFrames}

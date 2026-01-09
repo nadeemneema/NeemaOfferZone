@@ -53,7 +53,7 @@ const PrescriptionForm = ({
   const [showResults, setShowResults] = useState(false);
   const [showFrameSelection, setShowFrameSelection] = useState(initialView === 'frames');
   const [showLensSelection, setShowLensSelection] = useState(false);
-  const [showCart, setShowCart] = useState(false);
+  const [showCart, setShowCart] = useState(initialView === 'cart');
   const [frameSelection, setFrameSelection] = useState(externalFrameSelection || {
     frame1: '',
     frame2: ''
@@ -83,13 +83,22 @@ const PrescriptionForm = ({
     }
   }, [frame2Data?.lens]);
 
-  // Frame hierarchy: red > brown > green > orange > pink
+  // For zero-power, skip prescription and show lens selection directly
+  useEffect(() => {
+    if (powerType === 'zero-power' && initialView === 'prescription') {
+      setShowLensSelection(true);
+      setLensFilter('work-friendly'); // Show only work-friendly lenses for zero power
+    }
+  }, [powerType, initialView]);
+
+  // Frame hierarchy: red > brown > green > orange > pink > white
   const frameHierarchy = {
-    'Red': 5,
-    'Brown': 4,
-    'Green': 3,
-    'Orange': 2,
-    'Pink': 1
+    'Red': 6,
+    'Brown': 5,
+    'Green': 4,
+    'Orange': 3,
+    'Pink': 2,
+    'White': 1
   };
 
   // Function to get the higher priority frame
@@ -172,6 +181,156 @@ const PrescriptionForm = ({
       const leftInRange = leftSph >= -8.0 && leftSph <= 7.5 && leftCyl >= -4.0 && leftCyl <= 0;
       return rightInRange && leftInRange;
     }
+  };
+
+  // Check if prescription is within Basic Hard Coat lens range
+  const isPrescriptionInBasicHardCoatRange = () => {
+    // Get SPH and CYL values for both eyes (use DV for progressive/bifocal, direct values for single vision)
+    let rightSph, rightCyl, leftSph, leftCyl;
+    
+    if (requiresAdd) {
+      // Progressive/Bifocal: use DV values
+      rightSph = parseFloat(prescriptionData.rightEye.dv?.sph) || 0;
+      rightCyl = parseFloat(prescriptionData.rightEye.dv?.cyl) || 0;
+      leftSph = parseFloat(prescriptionData.leftEye.dv?.sph) || 0;
+      leftCyl = parseFloat(prescriptionData.leftEye.dv?.cyl) || 0;
+    } else {
+      // Single vision: use direct values
+      rightSph = parseFloat(prescriptionData.rightEye.sph) || 0;
+      rightCyl = parseFloat(prescriptionData.rightEye.cyl) || 0;
+      leftSph = parseFloat(prescriptionData.leftEye.sph) || 0;
+      leftCyl = parseFloat(prescriptionData.leftEye.cyl) || 0;
+    }
+    
+    // Basic Hard Coat range: SPH 0 to -6, CYL 0 to -2
+    const rightInRange = rightSph >= -6 && rightSph <= 0 && rightCyl >= -2 && rightCyl <= 0;
+    const leftInRange = leftSph >= -6 && leftSph <= 0 && leftCyl >= -2 && leftCyl <= 0;
+    
+    return rightInRange && leftInRange;
+  };
+
+  // Check if HC_PG (Hard Coat + Photogray) is available for both eyes
+  const isPhotograyAvailable = () => {
+    if (!matchedResults) return false;
+    
+    let results;
+    if (powerType === 'progressive') {
+      results = lensType === 'bifocal' ? matchedResults.bifocal : matchedResults.progressive;
+    } else {
+      return false; // Only for progressive/bifocal
+    }
+    
+    if (!results) return false;
+    
+    const rightEyeCoatings = results.rightEye?.error ? [] : getAvailableCoatings(results.rightEye);
+    const leftEyeCoatings = results.leftEye?.error ? [] : getAvailableCoatings(results.leftEye);
+    
+    const rightHasPG = rightEyeCoatings.some(c => c.code === 'HC_PG');
+    const leftHasPG = leftEyeCoatings.some(c => c.code === 'HC_PG');
+    
+    return rightHasPG && leftHasPG;
+  };
+
+  // Get HC_PG price from enterprise data
+  const getPhotograyPrice = () => {
+    if (!matchedResults) return 0;
+    
+    let results;
+    if (powerType === 'progressive') {
+      results = lensType === 'bifocal' ? matchedResults.bifocal : matchedResults.progressive;
+    } else {
+      return 0;
+    }
+    
+    if (!results) return 0;
+    
+    const rightEyeCoatings = results.rightEye?.error ? [] : getAvailableCoatings(results.rightEye);
+    const leftEyeCoatings = results.leftEye?.error ? [] : getAvailableCoatings(results.leftEye);
+    
+    const rightPG = rightEyeCoatings.find(c => c.code === 'HC_PG');
+    const leftPG = leftEyeCoatings.find(c => c.code === 'HC_PG');
+    
+    // Return the higher price if both eyes have HC_PG
+    if (rightPG && leftPG) {
+      return Math.max(
+        typeof rightPG.price === 'number' ? rightPG.price : 0,
+        typeof leftPG.price === 'number' ? leftPG.price : 0
+      );
+    }
+    
+    return 0;
+  };
+
+  // Check if ARC_PG (ARC + Photogray) is available for both eyes
+  const isARCPhotograyAvailable = () => {
+    if (!matchedResults) return false;
+    
+    let results;
+    if (powerType === 'progressive') {
+      results = lensType === 'bifocal' ? matchedResults.bifocal : matchedResults.progressive;
+    } else {
+      return false; // Only for progressive/bifocal
+    }
+    
+    if (!results) return false;
+    
+    const rightEyeCoatings = results.rightEye?.error ? [] : getAvailableCoatings(results.rightEye);
+    const leftEyeCoatings = results.leftEye?.error ? [] : getAvailableCoatings(results.leftEye);
+    
+    const rightHasARCPG = rightEyeCoatings.some(c => c.code === 'ARC_PG');
+    const leftHasARCPG = leftEyeCoatings.some(c => c.code === 'ARC_PG');
+    
+    return rightHasARCPG && leftHasARCPG;
+  };
+
+  // Get polycarbonate info for a specific lens type
+  const getPolyInfo = (lensOption) => {
+    const lensTypeLower = lensOption.type.toLowerCase();
+    let coatingCode = null;
+    let price = 0;
+    let lensCategory = 'singleVision';
+    
+    // Determine lens category and coating code
+    if (powerType === 'progressive') {
+      if (lensType === 'progressive') {
+        lensCategory = 'progressive';
+        if (lensTypeLower.includes('normal corridor anti-glare progressive')) {
+          coatingCode = 'ARC_POLY';
+          price = 4500;
+        } else if (lensTypeLower.includes('normal corridor blu-cut progressive')) {
+          coatingCode = 'BLUCUT_PC_POLY';
+          price = 5000;
+        }
+      } else if (lensType === 'bifocal') {
+        lensCategory = 'bifocal';
+        if (lensTypeLower.includes('circular bi-focal kt anti-glare')) {
+          coatingCode = 'ARC_POLY';
+          price = 1500;
+        } else if (lensTypeLower.includes('circular bi-focal kt blu-cut')) {
+          coatingCode = 'BLUCUT_PC_POLY';
+          price = 2000;
+        }
+      }
+    } else if (powerType !== 'progressive') {
+      // Single vision
+      if (lensTypeLower.includes('anti-glare essentials')) {
+        coatingCode = 'ARC_POLY';
+        price = 500;
+      } else if (lensTypeLower.includes('blu-cut') || lensTypeLower.includes('blu-green')) {
+        coatingCode = 'BLUCUT_PC_POLY';
+        price = 800;
+      }
+    }
+    
+    if (!coatingCode) return null;
+    
+    const isAvailable = checkPolyAvailability(coatingCode, lensCategory);
+    
+    return {
+      available: isAvailable,
+      price: price,
+      name: 'Polycarbonate (Unbreakable) 1.59'
+    };
   };
 
   // Filter progressive lenses based on available coatings in enterprise data
@@ -271,6 +430,11 @@ const PrescriptionForm = ({
     const frameData = getSelectedFrameData();
     if (!frameData) return [];
     
+    // Use zero power lenses if powerType is zero-power
+    if (powerType === 'zero-power') {
+      return frameData.zeroPowerLensOptions || [];
+    }
+    
     // Use progressive, bifocal, or regular lenses based on powerType and lensType
     let baseLensOptions;
     let useBifocal = false;
@@ -296,6 +460,15 @@ const PrescriptionForm = ({
     } else {
       // Single vision or other power types
       baseLensOptions = frameData.lensOptions || [];
+      
+      // Filter out Basic Hard Coat lens if prescription is out of range (for single vision)
+      baseLensOptions = baseLensOptions.filter(option => {
+        const isBasicHardCoat = option.type.toLowerCase().includes('basic hard coat');
+        if (isBasicHardCoat && !isPrescriptionInBasicHardCoatRange()) {
+          return false; // Hide if out of range
+        }
+        return true; // Show all other lenses
+      });
     }
     
     let allOptions = [...baseLensOptions];
@@ -489,15 +662,32 @@ const PrescriptionForm = ({
     console.log('Lens selected:', lensOption.type);
     console.log('Full lens option:', lensOption);
     
-    // Check for polycarbonate upgrade eligibility for specific lenses
-    let hasPolyUpgrade = false;
-    let polyCoatingInfo = null;
+    // Skip popup for high power lenses
+    if (lensOption.isHighPower) {
+      completeLensSelection(lensOption);
+      return;
+    }
     
     const lensTypeLower = lensOption.type.toLowerCase();
     
+    // Skip popup for Basic Normal Corridor Progressive or Circular Bi-Focal KT Hard Coat if HC_PG is not available
+    if (powerType === 'progressive' && 
+        (lensTypeLower.includes('basic normal corridor progressive') ||
+         lensTypeLower.includes('circular bi-focal kt hard coat')) &&
+        !isPhotograyAvailable()) {
+      completeLensSelection(lensOption);
+      return;
+    }
+    
+    // Check for polycarbonate upgrade eligibility for specific lenses
+    let hasPolyUpgrade = false;
+    let polyCoatingInfo = null;
+    let hasPhotochromicUpgrade = false;
+    let photochromicCoatingInfo = null;
+    
     // Progressive lenses
     if (powerType === 'progressive' && lensType === 'progressive' && matchedResults?.progressive) {
-      // Check for Normal Corridor Anti-Glare Progressive -> ARC_POLY
+      // Check for Normal Corridor Anti-Glare Progressive -> ARC_POLY + Photochromic (ARC_PG)
       if (lensTypeLower.includes('normal corridor anti-glare progressive')) {
         const polyAvailable = checkPolyAvailability('ARC_POLY', 'progressive');
         hasPolyUpgrade = true;
@@ -508,6 +698,18 @@ const PrescriptionForm = ({
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
+        };
+        
+        // Add Photochromic option
+        const photochromicAvailable = isARCPhotograyAvailable();
+        hasPhotochromicUpgrade = true;
+        photochromicCoatingInfo = {
+          key: 'forPhotochromic',
+          available: photochromicAvailable,
+          price: 2500,
+          name: 'Photochromic (Photogrey)',
+          icon: '🕶️',
+          desc: photochromicAvailable ? 'Darkens in sunlight' : 'Not available for this power'
         };
       }
       
@@ -528,7 +730,7 @@ const PrescriptionForm = ({
     
     // Bifocal lenses
     if (powerType === 'progressive' && lensType === 'bifocal' && matchedResults?.bifocal) {
-      // Check for Circular Bi-Focal KT Anti-Glare -> ARC_POLY
+      // Check for Circular Bi-Focal KT Anti-Glare -> ARC_POLY + Photochromic (ARC_PG)
       if (lensTypeLower.includes('circular bi-focal kt anti-glare')) {
         const polyAvailable = checkPolyAvailability('ARC_POLY', 'bifocal');
         hasPolyUpgrade = true;
@@ -539,6 +741,18 @@ const PrescriptionForm = ({
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
+        };
+        
+        // Add Photochromic option
+        const photochromicAvailable = isARCPhotograyAvailable();
+        hasPhotochromicUpgrade = true;
+        photochromicCoatingInfo = {
+          key: 'forPhotochromic',
+          available: photochromicAvailable,
+          price: 800,
+          name: 'Photochromic (Photogrey)',
+          icon: '🕶️',
+          desc: photochromicAvailable ? 'Darkens in sunlight' : 'Not available for this power'
         };
       }
       
@@ -588,18 +802,23 @@ const PrescriptionForm = ({
       }
     }
     
-    // Check if this lens has additional coatings available OR polycarbonate upgrade
-    if ((lensOption.additionalCoatings && Object.keys(lensOption.additionalCoatings).length > 0) || hasPolyUpgrade) {
+    // Check if this lens has additional coatings available OR polycarbonate upgrade OR photochromic upgrade
+    if ((lensOption.additionalCoatings && Object.keys(lensOption.additionalCoatings).length > 0) || hasPolyUpgrade || hasPhotochromicUpgrade) {
       console.log('Showing coatings popup');
       
-      // Combine regular coatings with polycarbonate upgrade if applicable
+      // Combine regular coatings with polycarbonate and photochromic upgrades if applicable
       let combinedCoatings = { ...(lensOption.additionalCoatings || {}) };
+      const extraInfo = {};
+      
       if (hasPolyUpgrade && polyCoatingInfo) {
-        // Store poly info separately to handle it differently
-        setPendingLensSelection({ ...lensOption, polyCoatingInfo });
-      } else {
-        setPendingLensSelection(lensOption);
+        extraInfo.polyCoatingInfo = polyCoatingInfo;
       }
+      
+      if (hasPhotochromicUpgrade && photochromicCoatingInfo) {
+        extraInfo.photochromicCoatingInfo = photochromicCoatingInfo;
+      }
+      
+      setPendingLensSelection({ ...lensOption, ...extraInfo });
       
       setSelectedCoatings([]);
       setShowCoatingsPopup(true);
@@ -685,6 +904,10 @@ const PrescriptionForm = ({
         if (coatingKey === 'forPoly' && pendingLensSelection.polyCoatingInfo) {
           totalAdditionalCost += pendingLensSelection.polyCoatingInfo.price;
           coatingNames.push('Polycarbonate 1.59');
+        } else if (coatingKey === 'forPhotochromic' && pendingLensSelection.photochromicCoatingInfo) {
+          // Handle photochromic upgrade
+          totalAdditionalCost += pendingLensSelection.photochromicCoatingInfo.price;
+          coatingNames.push('Photochromic');
         } else if (pendingLensSelection.additionalCoatings && pendingLensSelection.additionalCoatings[coatingKey]) {
           // Handle regular coatings
           totalAdditionalCost += pendingLensSelection.additionalCoatings[coatingKey];
@@ -763,53 +986,63 @@ const PrescriptionForm = ({
     // Calculate Frame 1 price
     let frame1Price = 0;
     let frame1Data_cart = null;
-    if (frameSelection.frame1 && selectedLens) {
+    if (frameSelection.frame1) {
       const frame1FrameData = framesData.frames.find(frame => frame.color === frameSelection.frame1);
+      frame1Data_cart = frame1FrameData;
       
-      // Use the selectedLens price directly (which includes additional coatings if added)
-      if (selectedLens.hasAdditionalCoatings || selectedLens.isHighPower) {
-        // Use the modified price from selectedLens
-        frame1Price = selectedLens.price.current;
-      } else {
-        // Look up original price from framesData
-        let frame1LensOption = frame1FrameData?.lensOptions?.find(option => option.type === selectedLens?.type);
-        if (!frame1LensOption) {
-          frame1LensOption = frame1FrameData?.bifocalLensOptions?.find(option => option.type === selectedLens?.type);
-        }
-        if (!frame1LensOption) {
-          frame1LensOption = frame1FrameData?.progressiveLensOptions?.find(option => option.type === selectedLens?.type);
-        }
-        if (frame1LensOption) {
-          frame1Price = frame1LensOption.price.current;
+      // Check if frame-only (NO LENS)
+      if (frame1Data?.powerType === 'frame-only' || selectedLens === 'NO LENS') {
+        frame1Price = frame1FrameData?.frameOnlyPrice || 0;
+      } else if (selectedLens) {
+        // Use the selectedLens price directly (which includes additional coatings if added)
+        if (selectedLens.hasAdditionalCoatings || selectedLens.isHighPower) {
+          // Use the modified price from selectedLens
+          frame1Price = selectedLens.price.current;
+        } else {
+          // Look up original price from framesData
+          let frame1LensOption = frame1FrameData?.lensOptions?.find(option => option.type === selectedLens?.type);
+          if (!frame1LensOption) {
+            frame1LensOption = frame1FrameData?.bifocalLensOptions?.find(option => option.type === selectedLens?.type);
+          }
+          if (!frame1LensOption) {
+            frame1LensOption = frame1FrameData?.progressiveLensOptions?.find(option => option.type === selectedLens?.type);
+          }
+          if (frame1LensOption) {
+            frame1Price = frame1LensOption.price.current;
+          }
         }
       }
-      frame1Data_cart = frame1FrameData;
     }
     
     // Calculate Frame 2 price
     let frame2Price = 0;
     let frame2Data_cart = null;
-    if (frameSelection.frame2 && selectedLensFrame2) {
+    if (frameSelection.frame2) {
       const frame2FrameData = framesData.frames.find(frame => frame.color === frameSelection.frame2);
+      frame2Data_cart = frame2FrameData;
       
-      // Use the selectedLensFrame2 price directly (which includes additional coatings if added)
-      if (selectedLensFrame2.hasAdditionalCoatings || selectedLensFrame2.isHighPower) {
-        // Use the modified price from selectedLensFrame2
-        frame2Price = selectedLensFrame2.price.current;
-      } else {
-        // Look up original price from framesData
-        let frame2LensOption = frame2FrameData?.lensOptions?.find(option => option.type === selectedLensFrame2?.type);
-        if (!frame2LensOption) {
-          frame2LensOption = frame2FrameData?.bifocalLensOptions?.find(option => option.type === selectedLensFrame2?.type);
-        }
-        if (!frame2LensOption) {
-          frame2LensOption = frame2FrameData?.progressiveLensOptions?.find(option => option.type === selectedLensFrame2?.type);
-        }
-        if (frame2LensOption) {
-          frame2Price = frame2LensOption.price.current;
+      // Check if frame-only (NO LENS)
+      if (frame2Data?.powerType === 'frame-only' || selectedLensFrame2 === 'NO LENS') {
+        frame2Price = frame2FrameData?.frameOnlyPrice || 0;
+      } else if (selectedLensFrame2) {
+        // Use the selectedLensFrame2 price directly (which includes additional coatings if added)
+        if (selectedLensFrame2.hasAdditionalCoatings || selectedLensFrame2.isHighPower) {
+          // Use the modified price from selectedLensFrame2
+          frame2Price = selectedLensFrame2.price.current;
+        } else {
+          // Look up original price from framesData
+          let frame2LensOption = frame2FrameData?.lensOptions?.find(option => option.type === selectedLensFrame2?.type);
+          if (!frame2LensOption) {
+            frame2LensOption = frame2FrameData?.bifocalLensOptions?.find(option => option.type === selectedLensFrame2?.type);
+          }
+          if (!frame2LensOption) {
+            frame2LensOption = frame2FrameData?.progressiveLensOptions?.find(option => option.type === selectedLensFrame2?.type);
+          }
+          if (frame2LensOption) {
+            frame2Price = frame2LensOption.price.current;
+          }
         }
       }
-      frame2Data_cart = frame2FrameData;
     }
     
     // Get the correct frame data based on mode
@@ -1220,7 +1453,8 @@ const PrescriptionForm = ({
               gap: '8px'
             }}>
               <span style={{fontSize: '20px'}}>
-                {frameSelection.frame1 === 'Pink' ? '🩷' :
+                {frameSelection.frame1 === 'White' ? '⚪' :
+                 frameSelection.frame1 === 'Pink' ? '🩷' :
                  frameSelection.frame1 === 'Red' ? '🔴' :
                  frameSelection.frame1 === 'Orange' ? '🟠' :
                  frameSelection.frame1 === 'Green' ? '🟢' :
@@ -1244,7 +1478,8 @@ const PrescriptionForm = ({
               gap: '8px'
             }}>
               <span style={{fontSize: '20px'}}>
-                {frameSelection.frame2 === 'Pink' ? '🩷' :
+                {frameSelection.frame2 === 'White' ? '⚪' :
+                 frameSelection.frame2 === 'Pink' ? '🩷' :
                  frameSelection.frame2 === 'Red' ? '🔴' :
                  frameSelection.frame2 === 'Orange' ? '🟠' :
                  frameSelection.frame2 === 'Green' ? '🟢' :
@@ -1256,7 +1491,9 @@ const PrescriptionForm = ({
             </div>
           )}
           
+          
           {/* Debug info - temporary */}
+          {/*
           <div style={{background: '#f0f0f0', padding: '10px', margin: '10px 0', fontSize: '12px'}}>
             <strong>Debug Info:</strong><br/>
             PowerType: {powerType}<br/>
@@ -1264,7 +1501,8 @@ const PrescriptionForm = ({
             Left SPH: {prescriptionData.leftEye.sph}<br/>
             Is High Power Needed: {isHighPowerNeeded() ? 'YES' : 'NO'}
           </div>
-          
+          */}
+
           {/* Lens Type Toggle - Only show for Progressive/Bifocal power type */}
           {(powerType === 'progressive') && (
             <div style={{
@@ -1312,20 +1550,24 @@ const PrescriptionForm = ({
           
           {/* Filter Buttons */}
           <div className="lens-filters">
-            <button 
-              className={`filter-btn ${lensFilter === 'bestsellers' ? 'active' : ''}`}
-              onClick={() => setLensFilter('bestsellers')}
-            >
-              <span className="filter-icon">⭐</span>
-              Bestsellers
-            </button>
-            <button 
-              className={`filter-btn ${lensFilter === 'work-friendly' ? 'active' : ''}`}
-              onClick={() => setLensFilter('work-friendly')}
-            >
-              <span className="filter-icon">💻</span>
-              Work Friendly
-            </button>
+            {powerType !== 'zero-power' && (
+              <button 
+                className={`filter-btn ${lensFilter === 'bestsellers' ? 'active' : ''}`}
+                onClick={() => setLensFilter('bestsellers')}
+              >
+                <span className="filter-icon">⭐</span>
+                Bestsellers
+              </button>
+            )}
+            {powerType !== 'progressive' && (
+              <button 
+                className={`filter-btn ${lensFilter === 'work-friendly' ? 'active' : ''}`}
+                onClick={() => setLensFilter('work-friendly')}
+              >
+                <span className="filter-icon">💻</span>
+                Work Friendly
+              </button>
+            )}
             {isHighPowerNeeded() && (
               <button 
                 className={`filter-btn ${lensFilter === 'high-power' ? 'active' : ''}`}
@@ -1367,10 +1609,11 @@ const PrescriptionForm = ({
             ) : (
               getLensOptions().map((lensOption, index) => {
               const isPremium = lensOption.type.toLowerCase().includes('premium') || lensOption.type.toLowerCase().includes('wide corridor');
+              const isBasicHardCoat = lensOption.type.toLowerCase().includes('basic hard coat');
               return (
               <div 
                 key={index} 
-                className={`lens-card ${selectedLens?.type === lensOption.type && selectedLens?.isHighPower === lensOption.isHighPower ? 'selected' : ''} ${isPremium ? 'premium-card' : ''}`}
+                className={`lens-card ${selectedLens?.type === lensOption.type && selectedLens?.isHighPower === lensOption.isHighPower ? 'selected' : ''} ${isPremium ? 'premium-card' : ''} ${isBasicHardCoat ? 'basic-hard-coat' : ''}`}
                 onClick={() => handleLensSelection(lensOption)}
                 style={{
                   cursor: 'pointer',
@@ -1438,6 +1681,31 @@ const PrescriptionForm = ({
                         <span>{feature}</span>
                       </div>
                     ))}
+                    {/* Show Photochromatic option for specific lens types if available */}
+                    {powerType === 'progressive' && 
+                     isPhotograyAvailable() &&
+                     (lensOption.type.toLowerCase().includes('basic normal corridor progressive') ||
+                      lensOption.type.toLowerCase().includes('circular bi-focal kt hard coat')) &&
+                     lensOption.additionalCoatings?.forPG && (
+                      <div className="coating-badge coating-badge-photochromatic">
+                        <span className="coating-badge-icon">🕶️</span>
+                        <span className="coating-badge-text">
+                          Photochromatic (Photogrey) Available +₹{lensOption.additionalCoatings.forPG}
+                        </span>
+                      </div>
+                    )}
+                    {/* Show Polycarbonate option for applicable lens types if available */}
+                    {(() => {
+                      const polyInfo = getPolyInfo(lensOption);
+                      return polyInfo && polyInfo.available && (
+                        <div className="coating-badge coating-badge-polycarbonate">
+                          <span className="coating-badge-icon">💎</span>
+                          <span className="coating-badge-text">
+                            {polyInfo.name} Available +₹{polyInfo.price}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="lens-card-footer">
@@ -1486,7 +1754,7 @@ const PrescriptionForm = ({
                     const coatingInfo = {
                       forPG: { name: 'Photochromatic (Photogrey)', icon: '🕶️', desc: 'Darkens in sunlight' },
                       forARC: { name: 'Anti-Reflective Coating', icon: '🛡️', desc: 'Reduces glare' },
-                      forBluCut: { name: 'Blue Cut Protection', icon: '💻', desc: 'Blocks blue light' }
+                      forBluCut: { name: 'ARC & Blue Cut Protection', icon: '💻', desc: 'Blocks blue light' }
                     }[key];
                     
                     const isSelected = selectedCoatings.includes(key);
@@ -1512,6 +1780,37 @@ const PrescriptionForm = ({
                       </div>
                     );
                   })}
+                  
+                  {/* Photochromic upgrade option if available (above polycarbonate) */}
+                  {pendingLensSelection.photochromicCoatingInfo && (
+                    <div 
+                      key={pendingLensSelection.photochromicCoatingInfo.key}
+                      className={`coating-option ${selectedCoatings.includes(pendingLensSelection.photochromicCoatingInfo.key) ? 'selected' : ''} ${
+                        (selectedCoatings.length > 0 && !selectedCoatings.includes(pendingLensSelection.photochromicCoatingInfo.key)) || 
+                        !pendingLensSelection.photochromicCoatingInfo.available ? 'disabled' : ''
+                      }`}
+                      onClick={() => {
+                        if (pendingLensSelection.photochromicCoatingInfo.available && 
+                            (selectedCoatings.length === 0 || selectedCoatings.includes(pendingLensSelection.photochromicCoatingInfo.key))) {
+                          handleCoatingToggle(pendingLensSelection.photochromicCoatingInfo.key);
+                        }
+                      }}
+                    >
+                      <div className="coating-option-header">
+                        <div className="coating-checkbox">
+                          {selectedCoatings.includes(pendingLensSelection.photochromicCoatingInfo.key) && <span className="checkmark">✓</span>}
+                        </div>
+                        <div className="coating-icon">{pendingLensSelection.photochromicCoatingInfo.icon}</div>
+                        <div className="coating-details">
+                          <div className="coating-name">{pendingLensSelection.photochromicCoatingInfo.name}</div>
+                          <div className="coating-desc">{pendingLensSelection.photochromicCoatingInfo.desc}</div>
+                        </div>
+                      </div>
+                      <div className="coating-price">
+                        {pendingLensSelection.photochromicCoatingInfo.available ? `+₹${pendingLensSelection.photochromicCoatingInfo.price}` : 'N/A'}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Polycarbonate upgrade option if available */}
                   {pendingLensSelection.polyCoatingInfo && (
@@ -1551,6 +1850,8 @@ const PrescriptionForm = ({
                       ₹{selectedCoatings.reduce((sum, key) => {
                         if (key === 'forPoly' && pendingLensSelection.polyCoatingInfo) {
                           return sum + pendingLensSelection.polyCoatingInfo.price;
+                        } else if (key === 'forPhotochromic' && pendingLensSelection.photochromicCoatingInfo) {
+                          return sum + pendingLensSelection.photochromicCoatingInfo.price;
                         } else if (pendingLensSelection.additionalCoatings && pendingLensSelection.additionalCoatings[key]) {
                           return sum + pendingLensSelection.additionalCoatings[key];
                         }
@@ -1656,6 +1957,7 @@ const PrescriptionForm = ({
                     onChange={(e) => handleFrameChange('frame1', e.target.value)}
                   >
                     <option value="">Select Color</option>
+                    <option value="White">White</option>
                     <option value="Pink">Pink</option>
                     <option value="Orange">Orange</option>
                     <option value="Green">Green</option>
@@ -1676,6 +1978,7 @@ const PrescriptionForm = ({
                     onChange={(e) => handleFrameChange('frame2', e.target.value)}
                   >
                     <option value="">Select Color</option>
+                    <option value="White">White</option>
                     <option value="Pink">Pink</option>
                     <option value="Orange">Orange</option>
                     <option value="Green">Green</option>
@@ -1693,7 +1996,7 @@ const PrescriptionForm = ({
                 onClick={handleContinueToLensSelection}
                 disabled={!frameSelection.frame1}
               >
-                {frameSelection.frame1 && !frameSelection.frame2 ? 'Continue' : frameSelection.frame2 ? 'Continue with Both Frames' : 'Select Frame 1 to Continue'}
+                {frameSelection.frame1 && !frameSelection.frame2 ? 'Continue' : frameSelection.frame2 ? 'Continue with Frame 2' : 'Select Frame 1 to Continue'}
               </button>
             </div>
           </div>
@@ -2187,7 +2490,8 @@ const PrescriptionForm = ({
             gap: '8px'
           }}>
             <span style={{fontSize: '20px'}}>
-              {frameSelection.frame1 === 'Pink' ? '🩷' :
+              {frameSelection.frame1 === 'White' ? '⚪' :
+               frameSelection.frame1 === 'Pink' ? '🩷' :
                frameSelection.frame1 === 'Red' ? '🔴' :
                frameSelection.frame1 === 'Orange' ? '🟠' :
                frameSelection.frame1 === 'Green' ? '🟢' :
@@ -2211,7 +2515,8 @@ const PrescriptionForm = ({
             gap: '8px'
           }}>
             <span style={{fontSize: '20px'}}>
-              {frameSelection.frame2 === 'Pink' ? '🩷' :
+              {frameSelection.frame2 === 'White' ? '⚪' :
+               frameSelection.frame2 === 'Pink' ? '🩷' :
                frameSelection.frame2 === 'Red' ? '🔴' :
                frameSelection.frame2 === 'Orange' ? '🟠' :
                frameSelection.frame2 === 'Green' ? '🟢' :
@@ -2689,6 +2994,7 @@ const PrescriptionForm = ({
 
         {/* Action Buttons */}
         <div className="action-buttons">
+          {/*
           <button 
             className="check-button" 
             onClick={handleCheckPrices}
@@ -2696,6 +3002,7 @@ const PrescriptionForm = ({
           >
             Check Available Options & Prices
           </button>
+          */}
 
           {isPrescriptionInRange() && (
             <button 
