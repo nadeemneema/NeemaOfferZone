@@ -1090,7 +1090,16 @@ const PrescriptionForm = ({
       <div className="prescription-form">
         {/* Header */}
         <header className="header">
-          <button className="back-button" onClick={() => { setShowCart(false); window.scrollTo(0, 0); }}>
+          <button className="back-button" onClick={() => { 
+            if (powerType === 'frame-only') {
+              // For frame-only, go back to step 2 (skip step 3 and 4)
+              onBack();
+            } else {
+              // For other power types, go back to step 4 (lens selection)
+              setShowCart(false);
+            }
+            window.scrollTo(0, 0); 
+          }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -1496,7 +1505,16 @@ const PrescriptionForm = ({
       <div className="prescription-form">
         {/* Header */}
         <header className="header">
-          <button className="back-button" onClick={() => { setShowLensSelection(false); window.scrollTo(0, 0); }}>
+          <button className="back-button" onClick={() => { 
+            if (powerType === 'zero-power' || powerType === 'frame-only') {
+              // For zero-power and frame-only, go back to step 2 (skip step 3)
+              onBack();
+            } else {
+              // For other power types, go back to step 3
+              setShowLensSelection(false);
+            }
+            window.scrollTo(0, 0); 
+          }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>

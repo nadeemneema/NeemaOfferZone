@@ -30,13 +30,13 @@ const LensSelection = ({ onPowerTypeSelect, onBack, frameSelection, configuringF
       description: 'Blue light block for screen protection',
       icon: '🔵'
     },
-    {
+    /*{
       id: 'reading-power',
       title: 'Reading Power',
       badge: null,
       description: 'With power for near vision only',
       icon: '➕'
-    },
+    },*/
     {
       id: 'progressive',
       title: 'Progressive/Bifocal',
