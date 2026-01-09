@@ -68,6 +68,7 @@ const PrescriptionForm = ({
   const [showCoatingsPopup, setShowCoatingsPopup] = useState(false);
   const [pendingLensSelection, setPendingLensSelection] = useState(null);
   const [selectedCoatings, setSelectedCoatings] = useState([]);
+  const [showBenefitsModal, setShowBenefitsModal] = useState(false);
 
   // Sync selectedLens with frame1Data.lens prop changes
   useEffect(() => {
@@ -620,12 +621,10 @@ const PrescriptionForm = ({
     
     // Only frame 1 is selected - use single frame mode
     if (frame1Selected && !frame2Selected) {
-      setSelectedCoupon('SINGLE');
       setSingleFrameChoice('frame1');
     } 
     // Only frame 2 is selected - use single frame mode
     else if (!frame1Selected && frame2Selected) {
-      setSelectedCoupon('SINGLE');
       setSingleFrameChoice('frame2');
     } 
     // Both frames selected - use BOGO mode
@@ -639,7 +638,6 @@ const PrescriptionForm = ({
         frame1: 'Pink',
         frame2: ''
       });
-      setSelectedCoupon('SINGLE');
       setSingleFrameChoice('frame1');
     }
     
@@ -1283,7 +1281,7 @@ const PrescriptionForm = ({
             </div>
             <div className="cart-item-details">
               <h3 className="cart-item-title" style={{color: '#b8860b'}}>Neema Prime Membership Charges</h3>
-              <a href="#" className="view-benefits-link">View benefits</a>
+              <a href="#" className="view-benefits-link" onClick={(e) => { e.preventDefault(); setShowBenefitsModal(true); }}>View benefits</a>
               <div className="cart-item-footer" style={{marginTop: '1rem', paddingTop: '12px', borderTop: '1px solid #e2e8f0'}}>
                 <div></div>
                 <div className="cart-item-price">
@@ -1370,10 +1368,124 @@ const PrescriptionForm = ({
           </div>
 
           {/* Proceed Button */}
+          {/*
           <button className="proceed-button">
             Login to proceed
           </button>
+          */}
         </main>
+
+        {/* Membership Benefits Modal */}
+        {showBenefitsModal && (
+          <div className="photogrey-modal-overlay" onClick={() => setShowBenefitsModal(false)}>
+            <div className="photogrey-modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '500px'}}>
+              <div className="photogrey-modal-header">
+                <button className="modal-close-btn" onClick={() => setShowBenefitsModal(false)} aria-label="Close">
+                  ✕
+                </button>
+                <div className="photogrey-icon" style={{background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'}}>👑</div>
+                <h2 className="photogrey-title" style={{color: '#b8860b'}}>Neema Membership Benefits</h2>
+              </div>
+              <div className="photogrey-modal-body" style={{padding: '2rem'}}>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
+                    <div style={{
+                      minWidth: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>1</div>
+                    <p style={{margin: 0, fontSize: '16px', color: '#1e293b', lineHeight: '1.6'}}>
+                      <strong>B1G1 on all Eyeglasses*</strong>
+                    </p>
+                  </div>
+                  
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
+                    <div style={{
+                      minWidth: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>2</div>
+                    <p style={{margin: 0, fontSize: '16px', color: '#1e293b', lineHeight: '1.6'}}>
+                      <strong>10% off</strong> on all Contact lenses, Sunglasses and International Brands
+                    </p>
+                  </div>
+                  
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
+                    <div style={{
+                      minWidth: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>3</div>
+                    <p style={{margin: 0, fontSize: '16px', color: '#1e293b', lineHeight: '1.6'}}>
+                      <strong>Unlimited Free Eye Check-Up</strong> anytime
+                    </p>
+                  </div>
+                  
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
+                    <div style={{
+                      minWidth: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>4</div>
+                    <p style={{margin: 0, fontSize: '16px', color: '#1e293b', lineHeight: '1.6'}}>
+                      <strong>Unlimited Free Services</strong> at store
+                    </p>
+                  </div>
+                </div>
+                
+                <div style={{
+                  marginTop: '2rem',
+                  padding: '1rem',
+                  background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                  borderRadius: '12px',
+                  border: '2px solid #fbbf24',
+                  textAlign: 'center'
+                }}>
+                  <p style={{margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#b8860b'}}>
+                    ⏰ Valid for 1 year
+                  </p>
+                </div>
+              </div>
+              <div className="photogrey-modal-footer">
+                <button 
+                  className="photogrey-btn photogrey-btn-yes" 
+                  onClick={() => setShowBenefitsModal(false)}
+                  style={{width: '100%', background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'}}
+                >
+                  <span>Got it!</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1872,6 +1984,118 @@ const PrescriptionForm = ({
                 >
                   <span>{selectedCoatings.length === 0 ? 'Select Coatings' : 'Confirm'}</span>
                   {selectedCoatings.length > 0 && <span className="photogrey-btn-icon">→</span>}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Membership Benefits Modal */}
+        {showBenefitsModal && (
+          <div className="photogrey-modal-overlay" onClick={() => setShowBenefitsModal(false)}>
+            <div className="photogrey-modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '500px'}}>
+              <div className="photogrey-modal-header">
+                <button className="modal-close-btn" onClick={() => setShowBenefitsModal(false)} aria-label="Close">
+                  ✕
+                </button>
+                <div className="photogrey-icon" style={{background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'}}>👑</div>
+                <h2 className="photogrey-title" style={{color: '#b8860b'}}>Neema Membership Benefits</h2>
+              </div>
+              <div className="photogrey-modal-body" style={{padding: '2rem'}}>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
+                    <div style={{
+                      minWidth: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>1</div>
+                    <p style={{margin: 0, fontSize: '16px', color: '#1e293b', lineHeight: '1.6'}}>
+                      <strong>B1G1 on all Eyeglasses*</strong>
+                    </p>
+                  </div>
+                  
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
+                    <div style={{
+                      minWidth: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>2</div>
+                    <p style={{margin: 0, fontSize: '16px', color: '#1e293b', lineHeight: '1.6'}}>
+                      <strong>10% off</strong> on all Contact lenses, Sunglasses and International Brands
+                    </p>
+                  </div>
+                  
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
+                    <div style={{
+                      minWidth: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>3</div>
+                    <p style={{margin: 0, fontSize: '16px', color: '#1e293b', lineHeight: '1.6'}}>
+                      <strong>Unlimited Free Eye Check-Up</strong> anytime
+                    </p>
+                  </div>
+                  
+                  <div style={{display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
+                    <div style={{
+                      minWidth: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>4</div>
+                    <p style={{margin: 0, fontSize: '16px', color: '#1e293b', lineHeight: '1.6'}}>
+                      <strong>Unlimited Free Services</strong> at store
+                    </p>
+                  </div>
+                </div>
+                
+                <div style={{
+                  marginTop: '2rem',
+                  padding: '1rem',
+                  background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                  borderRadius: '12px',
+                  border: '2px solid #fbbf24',
+                  textAlign: 'center'
+                }}>
+                  <p style={{margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#b8860b'}}>
+                    ⏰ Valid for 1 year
+                  </p>
+                </div>
+              </div>
+              <div className="photogrey-modal-footer">
+                <button 
+                  className="photogrey-btn photogrey-btn-yes" 
+                  onClick={() => setShowBenefitsModal(false)}
+                  style={{width: '100%', background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'}}
+                >
+                  <span>Got it!</span>
                 </button>
               </div>
             </div>
