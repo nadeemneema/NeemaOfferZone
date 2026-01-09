@@ -800,6 +800,22 @@ const PrescriptionForm = ({
       }
     }
     
+    // Zero Power lenses - always available for polycarbonate
+    if (powerType === 'zero-power') {
+      // Check for BLU-CUT/BLU-GREEN -> BLUCUT_PC_POLY
+      if (lensTypeLower.includes('blu-cut') || lensTypeLower.includes('blu-green')) {
+        hasPolyUpgrade = true;
+        polyCoatingInfo = {
+          key: 'forPoly',
+          available: true, // Always available for zero-power
+          price: 800,
+          name: 'Polycarbonate (Unbreakable) 1.59',
+          icon: '💎',
+          desc: 'Lightweight & shatter-resistant'
+        };
+      }
+    }
+    
     // Check if this lens has additional coatings available OR polycarbonate upgrade OR photochromic upgrade
     if ((lensOption.additionalCoatings && Object.keys(lensOption.additionalCoatings).length > 0) || hasPolyUpgrade || hasPhotochromicUpgrade) {
       console.log('Showing coatings popup');
@@ -992,18 +1008,20 @@ const PrescriptionForm = ({
       if (frame1Data?.powerType === 'frame-only' || selectedLens === 'NO LENS') {
         frame1Price = frame1FrameData?.frameOnlyPrice || 0;
       } else if (selectedLens) {
-        // Use the selectedLens price directly (which includes additional coatings if added)
-        if (selectedLens.hasAdditionalCoatings || selectedLens.isHighPower) {
-          // Use the modified price from selectedLens
+        // Use the selectedLens price directly if it has a price property
+        if (selectedLens.price && selectedLens.price.current) {
           frame1Price = selectedLens.price.current;
         } else {
-          // Look up original price from framesData
+          // Fallback: Look up original price from framesData
           let frame1LensOption = frame1FrameData?.lensOptions?.find(option => option.type === selectedLens?.type);
           if (!frame1LensOption) {
             frame1LensOption = frame1FrameData?.bifocalLensOptions?.find(option => option.type === selectedLens?.type);
           }
           if (!frame1LensOption) {
             frame1LensOption = frame1FrameData?.progressiveLensOptions?.find(option => option.type === selectedLens?.type);
+          }
+          if (!frame1LensOption) {
+            frame1LensOption = frame1FrameData?.zeroPowerLensOptions?.find(option => option.type === selectedLens?.type);
           }
           if (frame1LensOption) {
             frame1Price = frame1LensOption.price.current;
@@ -1023,18 +1041,20 @@ const PrescriptionForm = ({
       if (frame2Data?.powerType === 'frame-only' || selectedLensFrame2 === 'NO LENS') {
         frame2Price = frame2FrameData?.frameOnlyPrice || 0;
       } else if (selectedLensFrame2) {
-        // Use the selectedLensFrame2 price directly (which includes additional coatings if added)
-        if (selectedLensFrame2.hasAdditionalCoatings || selectedLensFrame2.isHighPower) {
-          // Use the modified price from selectedLensFrame2
+        // Use the selectedLensFrame2 price directly if it has a price property
+        if (selectedLensFrame2.price && selectedLensFrame2.price.current) {
           frame2Price = selectedLensFrame2.price.current;
         } else {
-          // Look up original price from framesData
+          // Fallback: Look up original price from framesData
           let frame2LensOption = frame2FrameData?.lensOptions?.find(option => option.type === selectedLensFrame2?.type);
           if (!frame2LensOption) {
             frame2LensOption = frame2FrameData?.bifocalLensOptions?.find(option => option.type === selectedLensFrame2?.type);
           }
           if (!frame2LensOption) {
             frame2LensOption = frame2FrameData?.progressiveLensOptions?.find(option => option.type === selectedLensFrame2?.type);
+          }
+          if (!frame2LensOption) {
+            frame2LensOption = frame2FrameData?.zeroPowerLensOptions?.find(option => option.type === selectedLensFrame2?.type);
           }
           if (frame2LensOption) {
             frame2Price = frame2LensOption.price.current;
@@ -1317,8 +1337,8 @@ const PrescriptionForm = ({
               onChange={handleCouponChange}
             >
               <option value="">Select Coupon</option>
-              {/* Only show SINGLE coupon if there's exactly one frame */}
-              {((frameSelection.frame1 && !frameSelection.frame2) || (!frameSelection.frame1 && frameSelection.frame2)) && (
+              {/* Only show SINGLE coupon if there's exactly one frame and not frame-only type */}
+              {((frameSelection.frame1 && !frameSelection.frame2) || (!frameSelection.frame1 && frameSelection.frame2)) && powerType !== 'frame-only' && (
                 <option value="SINGLE">For SINGLE Frame</option>
               )}
               <option value="FREEMEMBERSHIP">FREE Membership</option>
