@@ -1074,6 +1074,98 @@ const PrescriptionForm = ({
       selectedFrameData = frame1Price >= frame2Price ? frame1Data_cart : frame2Data_cart;
     }
     
+    // Calculate color-based additional discount
+    const calculateColorDiscount = () => {
+      if (!frameSelection.frame1 || !frameSelection.frame2) return 0;
+      
+      const frame1Color = frame1Data_cart?.color?.toLowerCase();
+      const frame2Color = frame2Data_cart?.color?.toLowerCase();
+      
+      if (!frame1Color || !frame2Color) return 0;
+      
+      // Check if one frame is red and the other is a specific color
+      const isFrame1Red = frame1Color === 'red';
+      const isFrame2Red = frame2Color === 'red';
+      
+      if (isFrame1Red && !isFrame2Red) {
+        // One frame is red
+        const redDiscountMap = {
+          'brown': 800,
+          'green': 1000,
+          'orange': 1200,
+          'pink': 1500,
+          'white': 1800
+        };
+        return redDiscountMap[frame2Color] || 0;
+      }
+      
+      if (isFrame2Red && !isFrame1Red) {
+        // Other frame is red
+        const redDiscountMap = {
+          'brown': 800,
+          'green': 1000,
+          'orange': 1200,
+          'pink': 1500,
+          'white': 1800
+        };
+        return redDiscountMap[frame1Color] || 0;
+      }
+      
+      // Check if one frame is brown and the other is a specific color
+      const isFrame1Brown = frame1Color === 'brown';
+      const isFrame2Brown = frame2Color === 'brown';
+      
+      if (isFrame1Brown && !isFrame2Brown) {
+        // One frame is brown
+        const brownDiscountMap = {
+          'green': 500,
+          'orange': 800,
+          'pink': 1000,
+          'white': 1200
+        };
+        return brownDiscountMap[frame2Color] || 0;
+      }
+      
+      if (isFrame2Brown && !isFrame1Brown) {
+        // Other frame is brown
+        const brownDiscountMap = {
+          'green': 500,
+          'orange': 800,
+          'pink': 1000,
+          'white': 1200
+        };
+        return brownDiscountMap[frame1Color] || 0;
+      }
+      
+      // Check if one frame is green and the other is a specific color
+      const isFrame1Green = frame1Color === 'green';
+      const isFrame2Green = frame2Color === 'green';
+      
+      if (isFrame1Green && !isFrame2Green) {
+        // One frame is green
+        const greenDiscountMap = {
+          'orange': 500,
+          'pink': 800,
+          'white': 1000
+        };
+        return greenDiscountMap[frame2Color] || 0;
+      }
+      
+      if (isFrame2Green && !isFrame1Green) {
+        // Other frame is green
+        const greenDiscountMap = {
+          'orange': 500,
+          'pink': 800,
+          'white': 1000
+        };
+        return greenDiscountMap[frame1Color] || 0;
+      }
+      
+      return 0;
+    };
+    
+    const colorDiscount = calculateColorDiscount();
+    
     // Calculate prices based on mode
     let higherPrice, membershipCharges, totalItemPrice, totalDiscount, totalPayable;
     
@@ -1094,16 +1186,16 @@ const PrescriptionForm = ({
       higherPrice = originalPrice - discountAmount;
       membershipCharges = selectedCoupon === 'FREEMEMBERSHIP' ? 0 : (selectedFrameData?.membershipCharges || 200);
       totalItemPrice = originalPrice;
-      totalDiscount = discountAmount;
-      totalPayable = higherPrice + membershipCharges;
+      totalDiscount = discountAmount + colorDiscount;
+      totalPayable = higherPrice + membershipCharges - colorDiscount;
     } else {
       // BOGO mode - charge for higher priced frame, lower is FREE
       higherPrice = Math.max(frame1Price, frame2Price);
       const lowerPrice = Math.min(frame1Price, frame2Price);
       membershipCharges = selectedCoupon === 'FREEMEMBERSHIP' ? 0 : (selectedFrameData?.membershipCharges || 200);
       totalItemPrice = frame1Price + frame2Price;
-      totalDiscount = lowerPrice; // The lower priced frame is the discount
-      totalPayable = higherPrice + membershipCharges;
+      totalDiscount = lowerPrice + colorDiscount; // The lower priced frame is the discount + color discount
+      totalPayable = higherPrice + membershipCharges - colorDiscount;
     }
 
     return (
@@ -1320,7 +1412,10 @@ const PrescriptionForm = ({
                       <span className="price-value" style={{color: '#10b981'}}>FREE</span>
                     </div>
                   ) : (
-                    <span className="price-value">₹{membershipCharges}</span>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                      <span style={{textDecoration: 'line-through', color: '#94a3b8', fontSize: '14px'}}>₹500</span>
+                      <span className="price-value">₹{membershipCharges}</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1389,6 +1484,16 @@ const PrescriptionForm = ({
             <div className="bill-row">
               <span>Total discount</span>
               <span style={{color: '#3b82f6'}}>-₹{totalDiscount}</span>
+            </div>
+            {colorDiscount > 0 && (
+              <div className="bill-row">
+                <span style={{fontSize: '14px', color: '#10b981'}}>Color combo/Additional discount</span>
+                <span style={{color: '#10b981', fontWeight: '600'}}>-₹{colorDiscount}</span>
+              </div>
+            )}
+            <div className="bill-row">
+              <span>Membership charges</span>
+              <span>₹{membershipCharges}</span>
             </div>
             <div className="bill-row total-row">
               <span style={{fontWeight: 'bold', fontSize: '18px'}}>Total payable</span>

@@ -1383,8 +1383,8 @@
             "forPG": 800
           },
           "price": {
-            "current": 2800,
-            "original": 3500,
+            "current": 2200,
+            "original": 3400,
             "pairs": 2
           }
         },
@@ -1396,7 +1396,7 @@
             "UV Protection"
           ],
           "price": {
-            "current": 3200,
+            "current": 2800,
             "original": 3800,
             "pairs": 2
           }
@@ -1412,8 +1412,8 @@
             "Water & Dust Repellent"
           ],
           "price": {
-            "current": 3800,
-            "original": 6200,
+            "current": 3400,
+            "original": 5900,
             "pairs": 2
           }
         },
@@ -1433,8 +1433,8 @@
             "forBluCut": 1800
           },
           "price": {
-            "current": 4300,
-            "original": 8000,
+            "current": 3900,
+            "original": 7800,
             "pairs": 2
           }
         }
@@ -1450,7 +1450,7 @@
             "forPG": 2500
           },
           "price": {
-            "current": 3500,
+            "current": 3200,
             "original": 6000,
             "pairs": 2
           }
@@ -1463,7 +1463,7 @@
             "UV Protection"
           ],
           "price": {
-            "current": 4200,
+            "current": 3800,
             "original": 6800,
             "pairs": 2
           }
@@ -1479,7 +1479,7 @@
             "Water & Dust Repellent"
           ],
           "price": {
-            "current": 5000,
+            "current": 4600,
             "original": 8800,
             "pairs": 2
           }
@@ -1495,12 +1495,12 @@
             "Adjusts Quickly"
           ],
           "additionalCoatings": {
-            "forPG": 4000,
+            "forPG": 3800,
             "forARC": 1800,
-            "forBluCut": 2500
+            "forBluCut": 2300
           },
           "price": {
-            "current": 5000,
+            "current": 4800,
             "original": 8800,
             "pairs": 2
           }
