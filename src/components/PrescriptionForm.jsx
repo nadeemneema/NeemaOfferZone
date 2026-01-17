@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './PrescriptionForm.css';
 import { matchPrescriptionData, getAvailableCoatings } from '../utils/prescriptionMatcher';
 import framesData from '../data/frames.json';
+import jsPDF from 'jspdf';
 
 const PrescriptionForm = ({ 
   powerType, 
@@ -69,6 +70,10 @@ const PrescriptionForm = ({
   const [pendingLensSelection, setPendingLensSelection] = useState(null);
   const [selectedCoatings, setSelectedCoatings] = useState([]);
   const [showBenefitsModal, setShowBenefitsModal] = useState(false);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerNumber, setCustomerNumber] = useState('');
+  const [extraNotes, setExtraNotes] = useState('');
 
   // Sync selectedLens with frame1Data.lens prop changes
   useEffect(() => {
@@ -515,6 +520,432 @@ const PrescriptionForm = ({
     alert('Call Nadeem\nPh No: 8861792967');
   };
 
+  // Generate unique order ID
+  const generateOrderId = () => {
+    // Get current counter from localStorage, default to 1 if not exists
+    let orderCounter = parseInt(localStorage.getItem('neemuOrderCounter') || '1', 10);
+    
+    // Format the order number with leading zeros (e.g., Neema 0001)
+    const orderNumber = `Neema ${String(orderCounter).padStart(4, '0')}`;
+    
+    // Increment and save counter for next order
+    localStorage.setItem('neemuOrderCounter', String(orderCounter + 1));
+    
+    return orderNumber;
+  };
+
+  // Generate PDF order form
+  const generateOrderPDF = (customerName, customerNumber, extraNotes, frame1Data_cart, frame2Data_cart, frame1PrescriptionData, frame2PrescriptionData, totalPayable, membershipCharges) => {
+    console.log('Frame 1 Prescription Data:', frame1PrescriptionData);
+    console.log('Frame 2 Prescription Data:', frame2PrescriptionData);
+    
+    const doc = new jsPDF();
+    const orderId = generateOrderId();
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB').replace(/\//g, '-');
+    const timeStr = today.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    
+    // Helper function to format prescription values with plus sign
+    const formatPrescriptionValue = (value) => {
+      if (!value || value === '-' || value === '0.00' || value === '0') return '-';
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return value;
+      if (numValue > 0 && !value.toString().startsWith('+')) {
+        return '+' + value;
+      }
+      return value;
+    };
+    
+    // Page dimensions
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    
+    // Header
+    doc.setFontSize(18);
+    doc.setTextColor(239, 68, 68); // Red color
+    doc.text('NEEMA OPTICALS', pageWidth / 2, 15, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+
+    // Order Form Title
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('ORDER FORM', pageWidth / 2, 37, { align: 'center' });
+    
+    // Customer and Order Details in two columns
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    let yPos = 45;
+    doc.text(`Customer Name: ${customerName}`, margin, yPos);
+    doc.text(`Order Number: ${orderId}`, pageWidth / 2 + 10, yPos);
+    yPos += 5;
+    doc.text(`Mobile Number: ${customerNumber}`, margin, yPos);
+    doc.text(`Date of Order: ${dateStr}`, pageWidth / 2 + 10, yPos);
+    yPos += 5;
+    
+    // Extra Notes (if provided)
+    if (extraNotes && extraNotes.trim()) {
+      doc.text(`Notes: ${extraNotes}`, margin, yPos);
+      yPos += 5;
+    }
+    
+    doc.text(`Time of Order: ${timeStr}`, pageWidth / 2 + 10, yPos);
+    
+    // Table Header
+    yPos = extraNotes && extraNotes.trim() ? 70 : 65;
+    doc.setFillColor(220, 220, 220);
+    doc.rect(margin, yPos, pageWidth - (2 * margin), 7, 'F');
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(10);
+    doc.text('SL NO', margin + 3, yPos + 5);
+    doc.text('PRODUCT DETAILS', margin + 20, yPos + 5);
+    
+    yPos += 10;
+    let slNo = 1;
+    
+    // Frame 1 Details
+    if (frameSelection.frame1) {
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      doc.text(`${slNo}`, margin + 3, yPos);
+      const frame1Text = `FRAME - ${frame1Data_cart?.name || 'NF'} - ${frame1Data_cart?.id || 'NF'} - ${frame1Data_cart?.color || 'NF'}`;
+      doc.text(frame1Text, margin + 20, yPos);
+      yPos += 6;
+      slNo++;
+      
+      // Frame 1 Lens Details
+      if (selectedLens && selectedLens !== 'NO LENS') {
+        doc.text(`${slNo}`, margin + 3, yPos);
+        const lensText = `LENS - ${selectedLens.type || 'N/A'}`;
+        doc.text(lensText, margin + 20, yPos);
+        yPos += 6;
+        
+        // Power Details for Frame 1
+        if (frame1PrescriptionData?.prescription) {
+          const prescription = frame1PrescriptionData.prescription;
+          
+          // Create bordered table - centered
+          const tableWidth = 126;
+          const tableStartX = (pageWidth - tableWidth) / 2;
+          const tableStartY = yPos;
+          const colWidth = 14;
+          const rowHeight = 6;
+          
+          // Draw table borders
+          doc.setLineWidth(0.3);
+          
+          // Header row with checkmarks
+          doc.setFontSize(8);
+          doc.setFont(undefined, 'bold');
+          doc.rect(tableStartX, tableStartY, colWidth * 5, rowHeight); // Right eye section
+          doc.rect(tableStartX + colWidth * 5, tableStartY, colWidth * 4, rowHeight); // Left eye section
+          doc.text('✓ RIGHT EYE (OD)', tableStartX + 18, tableStartY + 4);
+          doc.text('✓ LEFT EYE (OS)', tableStartX + 88, tableStartY + 4);
+          
+          // Column headers
+          yPos = tableStartY + rowHeight;
+          const headers = ['SPH', 'CYL', 'AXIS', 'PD'];
+          
+          // Draw empty cell and header cells for right eye
+          doc.rect(tableStartX, yPos, colWidth, rowHeight);
+          doc.text('', tableStartX + 5, yPos + 4);
+          headers.forEach((header, idx) => {
+            doc.rect(tableStartX + (idx + 1) * colWidth, yPos, colWidth, rowHeight);
+            doc.text(header, tableStartX + (idx + 1) * colWidth + 3, yPos + 4);
+          });
+          
+          // Draw header cells for left eye
+          headers.forEach((header, idx) => {
+            doc.rect(tableStartX + (idx + 5) * colWidth, yPos, colWidth, rowHeight);
+            doc.text(header, tableStartX + (idx + 5) * colWidth + 3, yPos + 4);
+          });
+          
+          // DV row
+          yPos += rowHeight;
+          doc.setFont(undefined, 'normal');
+          doc.rect(tableStartX, yPos, colWidth, rowHeight);
+          doc.text('DV', tableStartX + 3, yPos + 4);
+          
+          // Right eye DV values
+          const rightSph = prescription.rightEye.dv ? prescription.rightEye.dv.sph : prescription.rightEye.sph;
+          const rightCyl = prescription.rightEye.dv ? prescription.rightEye.dv.cyl : prescription.rightEye.cyl;
+          const rightAxis = prescription.rightEye.dv ? prescription.rightEye.dv.axis : prescription.rightEye.axis;
+          
+          doc.rect(tableStartX + colWidth, yPos, colWidth, rowHeight);
+          doc.text(formatPrescriptionValue(rightSph), tableStartX + colWidth + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 2, yPos, colWidth, rowHeight);
+          doc.text(formatPrescriptionValue(rightCyl), tableStartX + colWidth * 2 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 3, yPos, colWidth, rowHeight);
+          doc.text(rightAxis || '-', tableStartX + colWidth * 3 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 4, yPos, colWidth, rowHeight);
+          doc.text('-', tableStartX + colWidth * 4 + 5, yPos + 4);
+          
+          // Left eye DV values
+          const leftSph = prescription.leftEye.dv ? prescription.leftEye.dv.sph : prescription.leftEye.sph;
+          const leftCyl = prescription.leftEye.dv ? prescription.leftEye.dv.cyl : prescription.leftEye.cyl;
+          const leftAxis = prescription.leftEye.dv ? prescription.leftEye.dv.axis : prescription.leftEye.axis;
+          
+          doc.rect(tableStartX + colWidth * 5, yPos, colWidth, rowHeight);
+          doc.text(formatPrescriptionValue(leftSph), tableStartX + colWidth * 5 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 6, yPos, colWidth, rowHeight);
+          doc.text(formatPrescriptionValue(leftCyl), tableStartX + colWidth * 6 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 7, yPos, colWidth, rowHeight);
+          doc.text(leftAxis || '-', tableStartX + colWidth * 7 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 8, yPos, colWidth, rowHeight);
+          doc.text('-', tableStartX + colWidth * 8 + 5, yPos + 4);
+          
+          // NV row
+          yPos += rowHeight;
+          doc.rect(tableStartX, yPos, colWidth, rowHeight);
+          doc.text('NV', tableStartX + 3, yPos + 4);
+          
+          // Right eye NV values (if exists)
+          if (prescription.rightEye.nv) {
+            doc.rect(tableStartX + colWidth, yPos, colWidth, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.rightEye.nv.sph), tableStartX + colWidth + 3, yPos + 4);
+            doc.rect(tableStartX + colWidth * 2, yPos, colWidth, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.rightEye.nv.cyl), tableStartX + colWidth * 2 + 3, yPos + 4);
+            doc.rect(tableStartX + colWidth * 3, yPos, colWidth, rowHeight);
+            doc.text(prescription.rightEye.nv.axis || '-', tableStartX + colWidth * 3 + 3, yPos + 4);
+          } else {
+            doc.rect(tableStartX + colWidth, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth + 5, yPos + 4);
+            doc.rect(tableStartX + colWidth * 2, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 2 + 5, yPos + 4);
+            doc.rect(tableStartX + colWidth * 3, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 3 + 5, yPos + 4);
+          }
+          doc.rect(tableStartX + colWidth * 4, yPos, colWidth, rowHeight);
+          doc.text('-', tableStartX + colWidth * 4 + 5, yPos + 4);
+          
+          // Left eye NV values (if exists)
+          if (prescription.leftEye.nv) {
+            doc.rect(tableStartX + colWidth * 5, yPos, colWidth, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.leftEye.nv.sph), tableStartX + colWidth * 5 + 3, yPos + 4);
+            doc.rect(tableStartX + colWidth * 6, yPos, colWidth, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.leftEye.nv.cyl), tableStartX + colWidth * 6 + 3, yPos + 4);
+            doc.rect(tableStartX + colWidth * 7, yPos, colWidth, rowHeight);
+            doc.text(prescription.leftEye.nv.axis || '-', tableStartX + colWidth * 7 + 3, yPos + 4);
+          } else {
+            doc.rect(tableStartX + colWidth * 5, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 5 + 5, yPos + 4);
+            doc.rect(tableStartX + colWidth * 6, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 6 + 5, yPos + 4);
+            doc.rect(tableStartX + colWidth * 7, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 7 + 5, yPos + 4);
+          }
+          doc.rect(tableStartX + colWidth * 8, yPos, colWidth, rowHeight);
+          doc.text('-', tableStartX + colWidth * 8 + 5, yPos + 4);
+          
+          // ADD row (if progressive/bifocal)
+          if (prescription.rightEye.add || prescription.leftEye.add) {
+            yPos += rowHeight;
+            doc.rect(tableStartX, yPos, colWidth, rowHeight);
+            doc.text('ADD', tableStartX + 2, yPos + 4);
+            
+            // Right eye ADD (spans all right columns)
+            doc.rect(tableStartX + colWidth, yPos, colWidth * 4, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.rightEye.add), tableStartX + colWidth + 3, yPos + 4);
+            
+            // Left eye ADD (spans all left columns)
+            doc.rect(tableStartX + colWidth * 5, yPos, colWidth * 4, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.leftEye.add), tableStartX + colWidth * 5 + 3, yPos + 4);
+          }
+          
+          yPos += rowHeight + 4;
+        }
+        
+        doc.setFontSize(9);
+        yPos += 2;
+        slNo++;
+      }
+    }
+    
+    // Frame 2 Details
+    if (frameSelection.frame2) {
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      doc.text(`${slNo}`, margin + 3, yPos);
+      const frame2Text = `FRAME - ${frame2Data_cart?.name || 'NF'} - ${frame2Data_cart?.id || 'NF'} - ${frame2Data_cart?.color || 'NF'}`;
+      doc.text(frame2Text, margin + 20, yPos);
+      yPos += 6;
+      slNo++;
+      
+      // Frame 2 Lens Details
+      if (selectedLensFrame2 && selectedLensFrame2 !== 'NO LENS') {
+        doc.text(`${slNo}`, margin + 3, yPos);
+        const lensText = `LENS - ${selectedLensFrame2.type || 'N/A'}`;
+        doc.text(lensText, margin + 20, yPos);
+        yPos += 6;
+        
+        // Power Details for Frame 2
+        if (frame2PrescriptionData?.prescription) {
+          const prescription = frame2PrescriptionData.prescription;
+          
+          // Create bordered table - centered
+          const tableWidth = 140;
+          const tableStartX = (pageWidth - tableWidth) / 2;
+          const tableStartY = yPos;
+          const colWidth = 14;
+          const rowHeight = 6;
+          
+          // Draw table borders
+          doc.setLineWidth(0.3);
+          
+          // Header row with checkmarks
+          doc.setFontSize(8);
+          doc.setFont(undefined, 'bold');
+          doc.rect(tableStartX, tableStartY, colWidth * 5, rowHeight); // Right eye section
+          doc.rect(tableStartX + colWidth * 5, tableStartY, colWidth * 4, rowHeight); // Left eye section
+          doc.text('✓ RIGHT EYE (OD)', tableStartX + 18, tableStartY + 4);
+          doc.text('✓ LEFT EYE (OS)', tableStartX + 78, tableStartY + 4);
+          
+          // Column headers
+          yPos = tableStartY + rowHeight;
+          const headers = ['SPH', 'CYL', 'AXIS', 'PD'];
+          
+          // Draw empty cell and header cells for right eye
+          doc.rect(tableStartX, yPos, colWidth, rowHeight);
+          doc.text('', tableStartX + 5, yPos + 4);
+          headers.forEach((header, idx) => {
+            doc.rect(tableStartX + (idx + 1) * colWidth, yPos, colWidth, rowHeight);
+            doc.text(header, tableStartX + (idx + 1) * colWidth + 3, yPos + 4);
+          });
+          
+          // Draw header cells for left eye
+          headers.forEach((header, idx) => {
+            doc.rect(tableStartX + (idx + 5) * colWidth, yPos, colWidth, rowHeight);
+            doc.text(header, tableStartX + (idx + 5) * colWidth + 3, yPos + 4);
+          });
+          
+          // DV row
+          yPos += rowHeight;
+          doc.setFont(undefined, 'normal');
+          doc.rect(tableStartX, yPos, colWidth, rowHeight);
+          doc.text('DV', tableStartX + 3, yPos + 4);
+          
+          // Right eye DV values
+          const rightSph = prescription.rightEye.dv ? prescription.rightEye.dv.sph : prescription.rightEye.sph;
+          const rightCyl = prescription.rightEye.dv ? prescription.rightEye.dv.cyl : prescription.rightEye.cyl;
+          const rightAxis = prescription.rightEye.dv ? prescription.rightEye.dv.axis : prescription.rightEye.axis;
+          
+          doc.rect(tableStartX + colWidth, yPos, colWidth, rowHeight);
+          doc.text(formatPrescriptionValue(rightSph), tableStartX + colWidth + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 2, yPos, colWidth, rowHeight);
+          doc.text(formatPrescriptionValue(rightCyl), tableStartX + colWidth * 2 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 3, yPos, colWidth, rowHeight);
+          doc.text(rightAxis || '-', tableStartX + colWidth * 3 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 4, yPos, colWidth, rowHeight);
+          doc.text('-', tableStartX + colWidth * 4 + 5, yPos + 4);
+          
+          // Left eye DV values
+          const leftSph = prescription.leftEye.dv ? prescription.leftEye.dv.sph : prescription.leftEye.sph;
+          const leftCyl = prescription.leftEye.dv ? prescription.leftEye.dv.cyl : prescription.leftEye.cyl;
+          const leftAxis = prescription.leftEye.dv ? prescription.leftEye.dv.axis : prescription.leftEye.axis;
+          
+          doc.rect(tableStartX + colWidth * 5, yPos, colWidth, rowHeight);
+          doc.text(formatPrescriptionValue(leftSph), tableStartX + colWidth * 5 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 6, yPos, colWidth, rowHeight);
+          doc.text(formatPrescriptionValue(leftCyl), tableStartX + colWidth * 6 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 7, yPos, colWidth, rowHeight);
+          doc.text(leftAxis || '-', tableStartX + colWidth * 7 + 3, yPos + 4);
+          doc.rect(tableStartX + colWidth * 8, yPos, colWidth, rowHeight);
+          doc.text('-', tableStartX + colWidth * 8 + 5, yPos + 4);
+          
+          // NV row
+          yPos += rowHeight;
+          doc.rect(tableStartX, yPos, colWidth, rowHeight);
+          doc.text('NV', tableStartX + 3, yPos + 4);
+          
+          // Right eye NV values (if exists)
+          if (prescription.rightEye.nv) {
+            doc.rect(tableStartX + colWidth, yPos, colWidth, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.rightEye.nv.sph), tableStartX + colWidth + 3, yPos + 4);
+            doc.rect(tableStartX + colWidth * 2, yPos, colWidth, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.rightEye.nv.cyl), tableStartX + colWidth * 2 + 3, yPos + 4);
+            doc.rect(tableStartX + colWidth * 3, yPos, colWidth, rowHeight);
+            doc.text(prescription.rightEye.nv.axis || '-', tableStartX + colWidth * 3 + 3, yPos + 4);
+          } else {
+            doc.rect(tableStartX + colWidth, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth + 5, yPos + 4);
+            doc.rect(tableStartX + colWidth * 2, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 2 + 5, yPos + 4);
+            doc.rect(tableStartX + colWidth * 3, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 3 + 5, yPos + 4);
+          }
+          doc.rect(tableStartX + colWidth * 4, yPos, colWidth, rowHeight);
+          doc.text('-', tableStartX + colWidth * 4 + 5, yPos + 4);
+          
+          // Left eye NV values (if exists)
+          if (prescription.leftEye.nv) {
+            doc.rect(tableStartX + colWidth * 5, yPos, colWidth, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.leftEye.nv.sph), tableStartX + colWidth * 5 + 3, yPos + 4);
+            doc.rect(tableStartX + colWidth * 6, yPos, colWidth, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.leftEye.nv.cyl), tableStartX + colWidth * 6 + 3, yPos + 4);
+            doc.rect(tableStartX + colWidth * 7, yPos, colWidth, rowHeight);
+            doc.text(prescription.leftEye.nv.axis || '-', tableStartX + colWidth * 7 + 3, yPos + 4);
+          } else {
+            doc.rect(tableStartX + colWidth * 5, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 5 + 5, yPos + 4);
+            doc.rect(tableStartX + colWidth * 6, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 6 + 5, yPos + 4);
+            doc.rect(tableStartX + colWidth * 7, yPos, colWidth, rowHeight);
+            doc.text('-', tableStartX + colWidth * 7 + 5, yPos + 4);
+          }
+          doc.rect(tableStartX + colWidth * 8, yPos, colWidth, rowHeight);
+          doc.text('-', tableStartX + colWidth * 8 + 5, yPos + 4);
+          
+          // ADD row (if progressive/bifocal)
+          if (prescription.rightEye.add || prescription.leftEye.add) {
+            yPos += rowHeight;
+            doc.rect(tableStartX, yPos, colWidth, rowHeight);
+            doc.text('ADD', tableStartX + 2, yPos + 4);
+            
+            // Right eye ADD (spans all right columns)
+            doc.rect(tableStartX + colWidth, yPos, colWidth * 4, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.rightEye.add), tableStartX + colWidth + 3, yPos + 4);
+            
+            // Left eye ADD (spans all left columns)
+            doc.rect(tableStartX + colWidth * 5, yPos, colWidth * 4, rowHeight);
+            doc.text(formatPrescriptionValue(prescription.leftEye.add), tableStartX + colWidth * 5 + 3, yPos + 4);
+          }
+          
+          yPos += rowHeight + 4;
+        }
+        
+        doc.setFontSize(9);
+        yPos += 2;
+        slNo++;
+      }
+    }
+    
+    // Membership
+    doc.setFont(undefined, 'normal');
+    doc.text(`${slNo}`, margin + 3, yPos);
+    const membershipText = membershipCharges === 0 ? 'OTHER - PRIME MEMBERSHIP (FREE)' : `OTHER - PRIME MEMBERSHIP (Rs ${membershipCharges})`;
+    doc.text(membershipText, margin + 20, yPos);
+    yPos += 8;
+    
+    // Total Price Section
+    yPos += 4;
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, yPos, pageWidth - (2 * margin), 8, 'F');
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(12);
+    doc.text(`Total Amount: Rs ${totalPayable}`, pageWidth / 2, yPos + 5, { align: 'center' });
+    
+    // Footer
+    yPos = pageHeight - 15;
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text('Thank you for your business!', pageWidth / 2, yPos, { align: 'center' });
+    
+    // Open PDF in new tab
+    window.open(doc.output('bloburl'), '_blank');
+  };
+
   const handleFrameChange = (frameNumber, value) => {
     const newSelection = {
       ...frameSelection,
@@ -613,6 +1044,21 @@ const PrescriptionForm = ({
       onContinue();
       window.scrollTo(0, 0);
       return;
+    }
+    
+    // Save prescription data for the current frame being configured
+    if (configuringFrame === 'frame1' && onFrame1DataChange) {
+      onFrame1DataChange(prev => ({ 
+        ...prev, 
+        powerType: powerType,
+        prescription: prescriptionData 
+      }));
+    } else if (configuringFrame === 'frame2' && onFrame2DataChange) {
+      onFrame2DataChange(prev => ({ 
+        ...prev, 
+        powerType: powerType,
+        prescription: prescriptionData 
+      }));
     }
     
     // Don't auto-select frame 2 - just work with what's selected
@@ -1506,12 +1952,132 @@ const PrescriptionForm = ({
           </div>
 
           {/* Proceed Button */}
-          {/*
-          <button className="proceed-button">
-            Login to proceed
+          <button className="proceed-button" onClick={() => setShowCustomerModal(true)}>
+            Genarate Pdf
           </button>
-          */}
         </main>
+
+        {/* Customer Login Modal */}
+        {showCustomerModal && (
+          <div className="photogrey-modal-overlay" onClick={() => setShowCustomerModal(false)}>
+            <div className="photogrey-modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '450px'}}>
+              <div className="photogrey-modal-header">
+                <button className="modal-close-btn" onClick={() => setShowCustomerModal(false)} aria-label="Close">
+                  ✕
+                </button>
+                <div className="photogrey-icon" style={{background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'}}>👤</div>
+                <h2 className="photogrey-title" style={{color: '#1e40af'}}>Customer Details</h2>
+              </div>
+              <div className="photogrey-modal-body" style={{padding: '2rem'}}>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+                  <div>
+                    <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151'}}>
+                      Customer Name <span style={{color: '#ef4444'}}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Enter full name"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+                  <div>
+                    <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151'}}>
+                      Customer Number <span style={{color: '#ef4444'}}>*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={customerNumber}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 10) {
+                          setCustomerNumber(value);
+                        }
+                      }}
+                      placeholder="Enter 10-digit mobile number"
+                      maxLength="10"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+                  <div>
+                    <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151'}}>
+                      Extra Notes <span style={{color: '#94a3b8', fontSize: '14px'}}>(Optional)</span>
+                    </label>
+                    <textarea
+                      value={extraNotes}
+                      onChange={(e) => setExtraNotes(e.target.value)}
+                      placeholder="Enter any additional notes (optional)"
+                      rows="3"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s',
+                        resize: 'vertical',
+                        fontFamily: 'inherit'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (customerName.trim() && customerNumber.length === 10) {
+                        // Generate PDF with order details
+                        generateOrderPDF(customerName, customerNumber, extraNotes, frame1Data_cart, frame2Data_cart, frame1Data, frame2Data, totalPayable, membershipCharges);
+                        setShowCustomerModal(false);
+                        // Reset customer details
+                        setCustomerName('');
+                        setCustomerNumber('');
+                        setExtraNotes('');
+                      } else {
+                        alert('Please enter valid customer name and 10-digit mobile number');
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '14px',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      marginTop: '0.5rem'
+                    }}
+                  >
+                    Proceed
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Membership Benefits Modal */}
         {showBenefitsModal && (
@@ -2716,6 +3282,21 @@ const PrescriptionForm = ({
     } else {
       const results = matchPrescriptionData(emptyPrescription, powerType);
       setMatchedResults(results);
+    }
+    
+    // Save prescription data for the current frame being configured
+    if (configuringFrame === 'frame1' && onFrame1DataChange) {
+      onFrame1DataChange(prev => ({ 
+        ...prev, 
+        powerType: powerType,
+        prescription: emptyPrescription 
+      }));
+    } else if (configuringFrame === 'frame2' && onFrame2DataChange) {
+      onFrame2DataChange(prev => ({ 
+        ...prev, 
+        powerType: powerType,
+        prescription: emptyPrescription 
+      }));
     }
     
     // Bypass prescription logic entirely - force standard lens options
