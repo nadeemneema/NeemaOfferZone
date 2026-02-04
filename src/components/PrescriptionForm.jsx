@@ -177,14 +177,14 @@ const PrescriptionForm = ({
     const leftCyl = parseFloat(prescriptionData.leftEye.dv?.cyl) || 0;
     
     if (isProgressive) {
-      // Progressive premium range: SPH -8.5 to +5.5, CYL -4.0 to 0.0
-      const rightInRange = rightSph >= -8.5 && rightSph <= 5.5 && rightCyl >= -4.0 && rightCyl <= 0;
-      const leftInRange = leftSph >= -8.5 && leftSph <= 5.5 && leftCyl >= -4.0 && leftCyl <= 0;
+      // Progressive premium range: SPH -8.5 to +5.5, CYL -4.0 to +4.0
+      const rightInRange = rightSph >= -8.5 && rightSph <= 5.5 && rightCyl >= -4.0 && rightCyl <= 4.0;
+      const leftInRange = leftSph >= -8.5 && leftSph <= 5.5 && leftCyl >= -4.0 && leftCyl <= 4.0;
       return rightInRange && leftInRange;
     } else {
-      // Bifocal premium range: SPH -8.0 to +7.5, CYL -4.0 to 0.0
-      const rightInRange = rightSph >= -8.0 && rightSph <= 7.5 && rightCyl >= -4.0 && rightCyl <= 0;
-      const leftInRange = leftSph >= -8.0 && leftSph <= 7.5 && leftCyl >= -4.0 && leftCyl <= 0;
+      // Bifocal premium range: SPH -8.0 to +7.5, CYL -4.0 to +4.0
+      const rightInRange = rightSph >= -8.0 && rightSph <= 7.5 && rightCyl >= -4.0 && rightCyl <= 4.0;
+      const leftInRange = leftSph >= -8.0 && leftSph <= 7.5 && leftCyl >= -4.0 && leftCyl <= 4.0;
       return rightInRange && leftInRange;
     }
   };
@@ -289,6 +289,38 @@ const PrescriptionForm = ({
     return rightHasARCPG && leftHasARCPG;
   };
 
+  // Check if HC_PG (Hard Coat + Photogray) is available for single vision
+  const isSingleVisionHCPhotograyAvailable = () => {
+    if (!matchedResults || powerType === 'progressive') return false;
+    
+    const results = matchedResults;
+    if (!results || results.bifocal || results.progressive) return false;
+    
+    const rightEyeCoatings = results.rightEye?.error ? [] : getAvailableCoatings(results.rightEye);
+    const leftEyeCoatings = results.leftEye?.error ? [] : getAvailableCoatings(results.leftEye);
+    
+    const rightHasHCPG = rightEyeCoatings.some(c => c.code === 'HC_PG');
+    const leftHasHCPG = leftEyeCoatings.some(c => c.code === 'HC_PG');
+    
+    return rightHasHCPG && leftHasHCPG;
+  };
+
+  // Check if ARC_PG (ARC + Photogray) is available for single vision
+  const isSingleVisionARCPhotograyAvailable = () => {
+    if (!matchedResults || powerType === 'progressive') return false;
+    
+    const results = matchedResults;
+    if (!results || results.bifocal || results.progressive) return false;
+    
+    const rightEyeCoatings = results.rightEye?.error ? [] : getAvailableCoatings(results.rightEye);
+    const leftEyeCoatings = results.leftEye?.error ? [] : getAvailableCoatings(results.leftEye);
+    
+    const rightHasARCPG = rightEyeCoatings.some(c => c.code === 'ARC_PG');
+    const leftHasARCPG = leftEyeCoatings.some(c => c.code === 'ARC_PG');
+    
+    return rightHasARCPG && leftHasARCPG;
+  };
+
   // Get polycarbonate info for a specific lens type
   const getPolyInfo = (lensOption) => {
     const lensTypeLower = lensOption.type.toLowerCase();
@@ -302,10 +334,10 @@ const PrescriptionForm = ({
         lensCategory = 'progressive';
         if (lensTypeLower.includes('normal corridor anti-glare progressive')) {
           coatingCode = 'ARC_POLY';
-          price = 4500;
+          price = 3500;
         } else if (lensTypeLower.includes('normal corridor blu-cut progressive')) {
           coatingCode = 'BLUCUT_PC_POLY';
-          price = 5000;
+          price = 3200;
         }
       } else if (lensType === 'bifocal') {
         lensCategory = 'bifocal';
@@ -314,14 +346,14 @@ const PrescriptionForm = ({
           price = 1500;
         } else if (lensTypeLower.includes('circular bi-focal kt blu-cut')) {
           coatingCode = 'BLUCUT_PC_POLY';
-          price = 2000;
+          price = 1500;
         }
       }
     } else if (powerType !== 'progressive') {
       // Single vision
       if (lensTypeLower.includes('anti-glare essentials')) {
         coatingCode = 'ARC_POLY';
-        price = 500;
+        price = 800;
       } else if (lensTypeLower.includes('blu-cut') || lensTypeLower.includes('blu-green')) {
         coatingCode = 'BLUCUT_PC_POLY';
         price = 800;
@@ -1138,7 +1170,7 @@ const PrescriptionForm = ({
         polyCoatingInfo = {
           key: 'forPoly',
           available: polyAvailable,
-          price: 4500,
+          price: 3500,
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
@@ -1150,7 +1182,7 @@ const PrescriptionForm = ({
         photochromicCoatingInfo = {
           key: 'forPhotochromic',
           available: photochromicAvailable,
-          price: 2500,
+          price: 2200,
           name: 'Photochromic (Photogrey)',
           icon: '🕶️',
           desc: photochromicAvailable ? 'Darkens in sunlight' : 'Not available for this power'
@@ -1164,10 +1196,23 @@ const PrescriptionForm = ({
         polyCoatingInfo = {
           key: 'forPoly',
           available: polyAvailable,
-          price: 5000,
+          price: 3200,
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
+        };
+      }
+      
+      // Check for Wide Corridor Progressive - Premium -> Poly 1.59 upgrade
+      if (lensTypeLower.includes('wide corridor progressive - premium')) {
+        hasPolyUpgrade = true;
+        polyCoatingInfo = {
+          key: 'forPoly',
+          available: true,
+          price: 4500,
+          name: 'Polycarbonate (Unbreakable) 1.59 ~ with ARC & Blu Protection',
+          icon: '💎',
+          desc: 'Lightweight & shatter-resistant'
         };
       }
     }
@@ -1207,7 +1252,7 @@ const PrescriptionForm = ({
         polyCoatingInfo = {
           key: 'forPoly',
           available: polyAvailable,
-          price: 2000,
+          price: 1500,
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
@@ -1217,17 +1262,43 @@ const PrescriptionForm = ({
     
     // Single Vision lenses
     if (powerType !== 'progressive' && matchedResults && !matchedResults.bifocal && !matchedResults.progressive) {
-      // Check for ANTI-GLARE Essentials -> ARC_POLY
+      // Check for Basic Hard Coat -> HC_PG (Photochromic)
+      if (lensTypeLower.includes('basic hard coat')) {
+        const photochromicAvailable = isSingleVisionHCPhotograyAvailable();
+        hasPhotochromicUpgrade = true;
+        photochromicCoatingInfo = {
+          key: 'forPhotochromic',
+          available: photochromicAvailable,
+          price: 900,
+          name: 'Photochromic (Photogrey)',
+          icon: '🕶️',
+          desc: photochromicAvailable ? 'Darkens in sunlight' : 'Not available for this power'
+        };
+      }
+      
+      // Check for ANTI-GLARE Essentials -> ARC_POLY + Photochromic
       if (lensTypeLower.includes('anti-glare essentials')) {
         const polyAvailable = checkPolyAvailability('ARC_POLY', 'singleVision');
         hasPolyUpgrade = true;
         polyCoatingInfo = {
           key: 'forPoly',
           available: polyAvailable,
-          price: 500,
+          price: 800,
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
+        };
+        
+        // Add Photochromic option for ANTI-GLARE Essentials
+        const photochromicAvailable = isSingleVisionARCPhotograyAvailable();
+        hasPhotochromicUpgrade = true;
+        photochromicCoatingInfo = {
+          key: 'forPhotochromic',
+          available: photochromicAvailable,
+          price: 900,
+          name: 'Photochromic (Photogrey)',
+          icon: '🕶️',
+          desc: photochromicAvailable ? 'Darkens in sunlight' : 'Not available for this power'
         };
       }
       
@@ -2988,9 +3059,9 @@ const PrescriptionForm = ({
     // Set ranges based on power type
     let minCyl, maxCyl;
     if (requiresAdd) {
-      // Progressive/Bifocal: CYL up to -4
+      // Progressive/Bifocal: CYL from -4 to +4
       minCyl = -4;
-      maxCyl = 0;
+      maxCyl = 4;
     } else {
       // Single vision range
       minCyl = -4;
@@ -3020,7 +3091,7 @@ const PrescriptionForm = ({
   // Get CYL range hint text
   const getCylRangeHint = () => {
     if (requiresAdd) {
-      return '-4.00 to 0.00';
+      return '-4.00 to +4.00';
     }
     return '-4.00 to +4.00';
   };

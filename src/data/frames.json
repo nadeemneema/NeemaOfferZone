@@ -24,8 +24,8 @@
           "warranty": "6 Months Warranty",
           "coupon": "SINGLE",
           "price": {
-            "current": 1800,
-            "original": 2500,
+            "current": 2000,
+            "original": 4000,
             "pairs": 2
           }
         },
@@ -38,7 +38,7 @@
           "warranty": "6 Months Warranty",
           "coupon": "SINGLE",
           "price": {
-            "current": 2300,
+            "current": 2500,
             "original": 4200,
             "pairs": 2
           }
@@ -71,7 +71,7 @@
           "warranty": "1 Year Warranty",
           "coupon": "SINGLE",
           "price": {
-            "current": 3200,
+            "current": 3300,
             "original": 6000,
             "pairs": 2
           }
@@ -85,7 +85,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 800
+            "forPG": 500
           },
           "price": {
             "current": 2800,
@@ -152,7 +152,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 2500
+            "forPG": 2200
           },
           "price": {
             "current": 3500,
@@ -346,7 +346,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 800
+            "forPG": 500
           },
           "price": {
             "current": 3800,
@@ -361,9 +361,6 @@
             "Adjusted Lens Thickness",
             "UV Protection"
           ],
-          "additionalCoatings": {
-            "forPG": 800
-          },
           "price": {
             "current": 4200,
             "original": 3850,
@@ -421,7 +418,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 2500
+            "forPG": 2200
           },
           "price": {
             "current": 5000,
@@ -601,7 +598,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 800
+            "forPG": 500
           },
           "price": {
             "current": 4300,
@@ -616,9 +613,6 @@
             "Adjusted Lens Thickness",
             "UV Protection"
           ],
-          "additionalCoatings": {
-            "forPG": 800
-          },
           "price": {
             "current": 4700,
             "original": 3740,
@@ -676,7 +670,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 2500
+            "forPG": 2200
           },
           "price": {
             "current": 5700,
@@ -856,7 +850,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 800
+            "forPG": 500
           },
           "price": {
             "current": 5300,
@@ -871,9 +865,6 @@
             "Adjusted Lens Thickness",
             "UV Protection"
           ],
-          "additionalCoatings": {
-            "forPG": 800
-          },
           "price": {
             "current": 5700,
             "original": 3880,
@@ -941,7 +932,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 2500
+            "forPG": 2200
           },
           "price": {
             "current": 6500,
@@ -1111,7 +1102,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 800
+            "forPG": 500
           },
           "price": {
             "current": 6500,
@@ -1126,9 +1117,6 @@
             "Adjusted Lens Thickness",
             "UV Protection"
           ],
-          "additionalCoatings": {
-            "forPG": 800
-          },
           "price": {
             "current": 6900,
             "original": 3880,
@@ -1186,7 +1174,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 2500
+            "forPG": 2200
           },
           "price": {
             "current": 7600,
@@ -1380,10 +1368,10 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 800
+            "forPG": 500
           },
           "price": {
-            "current": 2200,
+            "current": 2500,
             "original": 3400,
             "pairs": 2
           }
@@ -1447,7 +1435,7 @@
             "Adjusted Lens Thickness"
           ],
           "additionalCoatings": {
-            "forPG": 2500
+            "forPG": 2200
           },
           "price": {
             "current": 3200,
