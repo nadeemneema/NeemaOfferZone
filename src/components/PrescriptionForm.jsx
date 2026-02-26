@@ -97,14 +97,15 @@ const PrescriptionForm = ({
     }
   }, [powerType, initialView]);
 
-  // Frame hierarchy: red > brown > green > orange > pink > white
+  // Frame hierarchy: red > brown > green > orange > pink > white > skyblue
   const frameHierarchy = {
     'Red': 6,
     'Brown': 5,
     'Green': 4,
     'Orange': 3,
     'Pink': 2,
-    'White': 1
+    'White': 1,
+    'Skyblue': 1
   };
 
   // Function to get the higher priority frame
@@ -2973,6 +2974,7 @@ const PrescriptionForm = ({
                     onChange={(e) => handleFrameChange('frame1', e.target.value)}
                   >
                     <option value="">Select Color</option>
+                    <option value="Skyblue">Skyblue</option>
                     <option value="White">White</option>
                     <option value="Pink">Pink</option>
                     <option value="Orange">Orange</option>
@@ -2994,6 +2996,7 @@ const PrescriptionForm = ({
                     onChange={(e) => handleFrameChange('frame2', e.target.value)}
                   >
                     <option value="">Select Color</option>
+                    <option value="Skyblue">Skyblue</option>
                     <option value="White">White</option>
                     <option value="Pink">Pink</option>
                     <option value="Orange">Orange</option>
