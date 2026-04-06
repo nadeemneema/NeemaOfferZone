@@ -59,7 +59,7 @@ const PrescriptionForm = ({
     frame1: '',
     frame2: ''
   });
-  const [lensFilter, setLensFilter] = useState('all'); // 'all', 'bestsellers', 'work-friendly', 'high-power'
+  const [lensFilter, setLensFilter] = useState('all'); // 'all', 'bestsellers', 'work-friendly'
   const [selectedLens, setSelectedLens] = useState(frame1Data?.lens || null);
   const [selectedLensFrame2, setSelectedLensFrame2] = useState(frame2Data?.lens || null);
   const [selectedCoupon, setSelectedCoupon] = useState('');
@@ -150,21 +150,22 @@ const PrescriptionForm = ({
     return framesData.frames.find(frame => frame.color === selectedColor);
   };
 
-  // Check if high power is needed (SPH more than -4, i.e., -5, -6, etc.)
-  const isHighPowerNeeded = () => {
-    // Only check for single vision (with-power or single)
-    if (powerType === 'progressive' || powerType === 'bifocal') return false;
-    
-    const rightSph = parseFloat(prescriptionData.rightEye.sph) || 0;
-    const leftSph = parseFloat(prescriptionData.leftEye.sph) || 0;
-    
-    console.log('Checking high power:', { powerType, rightSph, leftSph, prescriptionData });
-    
-    // Check if SPH is more negative than -4 (i.e., -5, -6, -7, etc.)
-    const isNeeded = rightSph < -4 || leftSph < -4;
-    console.log('High power needed:', isNeeded);
-    
-    return isNeeded;
+  // Check if CYL power exceeds ±2 (triggers +700 surcharge on all lenses)
+  const isHighCylPower = () => {
+    if (powerType === 'zero-power') return false;
+
+    let rightCyl, leftCyl;
+    if (requiresAdd) {
+      // Progressive/Bifocal: use DV CYL values
+      rightCyl = parseFloat(prescriptionData.rightEye.dv?.cyl) || 0;
+      leftCyl = parseFloat(prescriptionData.leftEye.dv?.cyl) || 0;
+    } else {
+      // Single vision: use direct CYL values
+      rightCyl = parseFloat(prescriptionData.rightEye.cyl) || 0;
+      leftCyl = parseFloat(prescriptionData.leftEye.cyl) || 0;
+    }
+
+    return Math.abs(rightCyl) > 2 || Math.abs(leftCyl) > 2;
   };
 
   // Check if prescription is within premium lens ranges
@@ -322,6 +323,22 @@ const PrescriptionForm = ({
     return rightHasARCPG && leftHasARCPG;
   };
 
+  // Check if 1.67 index lens is available for both eyes (ARC_1_67 or BLUCUT_1_67)
+  const is167UltraThinAvailable = (coatingCode, lensCategory) => {
+    let results;
+    if (lensCategory === 'bifocal') {
+      results = matchedResults?.bifocal;
+    } else if (lensCategory === 'progressive') {
+      results = matchedResults?.progressive;
+    } else {
+      results = matchedResults;
+    }
+    if (!results) return false;
+    const rightEyeCoatings = results.rightEye?.error ? [] : getAvailableCoatings(results.rightEye);
+    const leftEyeCoatings = results.leftEye?.error ? [] : getAvailableCoatings(results.leftEye);
+    return rightEyeCoatings.some(c => c.code === coatingCode) && leftEyeCoatings.some(c => c.code === coatingCode);
+  };
+
   // Get polycarbonate info for a specific lens type
   const getPolyInfo = (lensOption) => {
     const lensTypeLower = lensOption.type.toLowerCase();
@@ -464,7 +481,7 @@ const PrescriptionForm = ({
     });
   };
 
-  // Get lens options with high power variants if needed
+  // Get lens options based on power type and filters
   const getLensOptions = () => {
     const frameData = getSelectedFrameData();
     if (!frameData) return [];
@@ -476,12 +493,10 @@ const PrescriptionForm = ({
     
     // Use progressive, bifocal, or regular lenses based on powerType and lensType
     let baseLensOptions;
-    let useBifocal = false;
     
     if (powerType === 'progressive') {
       if (lensType === 'bifocal') {
         baseLensOptions = frameData.bifocalLensOptions || [];
-        useBifocal = true;
         
         // Filter bifocal lens options based on available coatings in enterprise data
         if (matchedResults?.bifocal) {
@@ -510,42 +525,31 @@ const PrescriptionForm = ({
       });
     }
     
-    let allOptions = [...baseLensOptions];
-    
-    // For bifocal lenses, don't create high power variants (bifocal already accounts for this)
-    if (!useBifocal) {
-      // Always create high power variants for filtering (progressive lenses only)
-      const highPowerOptions = baseLensOptions.map(option => ({
+    // Apply filter
+    let filteredOptions;
+    if (lensFilter === 'work-friendly') {
+      filteredOptions = baseLensOptions.filter(option =>
+        option.type.includes('BLU-CUT') || option.type.includes('BLU-GREEN')
+      );
+    } else if (lensFilter === 'bestsellers') {
+      filteredOptions = [...baseLensOptions];
+    } else {
+      filteredOptions = [...baseLensOptions];
+    }
+
+    // Apply CYL surcharge (+700) if either eye CYL exceeds ±2
+    if (isHighCylPower()) {
+      filteredOptions = filteredOptions.map(option => ({
         ...option,
-        originalType: option.type,
-        type: option.type,
         price: {
           ...option.price,
-          current: option.price.current + 500,
-          original: option.price.original + 500
-        },
-        isHighPower: true
+          current: option.price.current + 700,
+          original: option.price.original + 700
+        }
       }));
-      
-      if (isHighPowerNeeded()) {
-        // Add high power options to regular options
-        allOptions = [...baseLensOptions, ...highPowerOptions];
-      }
-      
-      // Filter based on selected filter
-      if (lensFilter === 'high-power') {
-        // Always show high power lenses with +500 prices when filter is clicked
-        return highPowerOptions;
-      } else if (lensFilter === 'work-friendly') {
-        return allOptions.filter(option => 
-          (option.type.includes('BLU-CUT') || option.type.includes('BLU-GREEN')) && !option.isHighPower
-        );
-      } else if (lensFilter === 'bestsellers') {
-        return allOptions.filter(option => !option.isHighPower); // Show only non-high-power lenses for bestsellers
-      }
     }
-    
-    return allOptions;
+
+    return filteredOptions;
   };
 
   // Define functions before conditional render
@@ -1120,16 +1124,7 @@ const PrescriptionForm = ({
       setSingleFrameChoice('frame1');
     }
     
-    // Set default filter based on SPH power
-    const rightSph = parseFloat(prescriptionData.rightEye.sph) || 0;
-    const leftSph = parseFloat(prescriptionData.leftEye.sph) || 0;
-    const needsHighPower = rightSph < -4 || leftSph < -4;
-    
-    if (needsHighPower) {
-      setLensFilter('high-power');
-    } else {
-      setLensFilter('bestsellers');
-    }
+    setLensFilter('bestsellers');
     
     setShowLensSelection(true);
     window.scrollTo(0, 0);
@@ -1138,12 +1133,6 @@ const PrescriptionForm = ({
   const handleLensSelection = (lensOption) => {
     console.log('Lens selected:', lensOption.type);
     console.log('Full lens option:', lensOption);
-    
-    // Skip popup for high power lenses
-    if (lensOption.isHighPower) {
-      completeLensSelection(lensOption);
-      return;
-    }
     
     const lensTypeLower = lensOption.type.toLowerCase();
     
@@ -1161,6 +1150,8 @@ const PrescriptionForm = ({
     let polyCoatingInfo = null;
     let hasPhotochromicUpgrade = false;
     let photochromicCoatingInfo = null;
+    let hasUltraThinUpgrade = false;
+    let ultraThinCoatingInfo = null;
     
     // Progressive lenses
     if (powerType === 'progressive' && lensType === 'progressive' && matchedResults?.progressive) {
@@ -1188,6 +1179,17 @@ const PrescriptionForm = ({
           icon: '🕶️',
           desc: photochromicAvailable ? 'Darkens in sunlight' : 'Not available for this power'
         };
+        // 1.67 Ultra Thin upgrade for ARC progressive
+        const arcUltraThinAvailable = is167UltraThinAvailable('ARC_1_67', 'progressive');
+        hasUltraThinUpgrade = true;
+        ultraThinCoatingInfo = {
+          key: 'forUltraThin',
+          available: arcUltraThinAvailable,
+          price: 1200,
+          name: '1.67 Ultra Thin Index',
+          icon: '🔬',
+          desc: arcUltraThinAvailable ? 'Thinner & lighter lenses' : 'Not available for this power'
+        };
       }
       
       // Check for Normal Corridor Blu-Cut Progressive -> BLUCUT_PC_POLY
@@ -1201,6 +1203,17 @@ const PrescriptionForm = ({
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
+        };
+        // 1.67 Ultra Thin upgrade for BLU-CUT progressive
+        const blucutUltraThinAvailable = is167UltraThinAvailable('BLUCUT_1_67', 'progressive');
+        hasUltraThinUpgrade = true;
+        ultraThinCoatingInfo = {
+          key: 'forUltraThin',
+          available: blucutUltraThinAvailable,
+          price: 1200,
+          name: '1.67 Ultra Thin Index',
+          icon: '🔬',
+          desc: blucutUltraThinAvailable ? 'Thinner & lighter lenses' : 'Not available for this power'
         };
       }
       
@@ -1244,6 +1257,17 @@ const PrescriptionForm = ({
           icon: '🕶️',
           desc: photochromicAvailable ? 'Darkens in sunlight' : 'Not available for this power'
         };
+        // 1.67 Ultra Thin upgrade for ARC bifocal
+        const bfArcUltraThinAvailable = is167UltraThinAvailable('ARC_1_67', 'bifocal');
+        hasUltraThinUpgrade = true;
+        ultraThinCoatingInfo = {
+          key: 'forUltraThin',
+          available: bfArcUltraThinAvailable,
+          price: 1200,
+          name: '1.67 Ultra Thin Index',
+          icon: '🔬',
+          desc: bfArcUltraThinAvailable ? 'Thinner & lighter lenses' : 'Not available for this power'
+        };
       }
       
       // Check for Circular Bi-Focal KT BLU-Cut -> BLUCUT_PC_POLY
@@ -1257,6 +1281,17 @@ const PrescriptionForm = ({
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
+        };
+        // 1.67 Ultra Thin upgrade for BLU-CUT bifocal
+        const bfBlucutUltraThinAvailable = is167UltraThinAvailable('BLUCUT_1_67', 'bifocal');
+        hasUltraThinUpgrade = true;
+        ultraThinCoatingInfo = {
+          key: 'forUltraThin',
+          available: bfBlucutUltraThinAvailable,
+          price: 1200,
+          name: '1.67 Ultra Thin Index',
+          icon: '🔬',
+          desc: bfBlucutUltraThinAvailable ? 'Thinner & lighter lenses' : 'Not available for this power'
         };
       }
     }
@@ -1301,6 +1336,17 @@ const PrescriptionForm = ({
           icon: '🕶️',
           desc: photochromicAvailable ? 'Darkens in sunlight' : 'Not available for this power'
         };
+        // 1.67 Ultra Thin upgrade for ANTI-GLARE single vision
+        const svArcUltraThinAvailable = is167UltraThinAvailable('ARC_1_67', 'singleVision');
+        hasUltraThinUpgrade = true;
+        ultraThinCoatingInfo = {
+          key: 'forUltraThin',
+          available: svArcUltraThinAvailable,
+          price: 1200,
+          name: '1.67 Ultra Thin Index',
+          icon: '🔬',
+          desc: svArcUltraThinAvailable ? 'Thinner & lighter lenses' : 'Not available for this power'
+        };
       }
       
       // Check for BLU-CUT/BLU-GREEN -> BLUCUT_PC_POLY
@@ -1314,6 +1360,17 @@ const PrescriptionForm = ({
           name: 'Polycarbonate (Unbreakable) 1.59',
           icon: '💎',
           desc: polyAvailable ? 'Lightweight & shatter-resistant' : 'Not available for this power'
+        };
+        // 1.67 Ultra Thin upgrade for BLU-CUT single vision
+        const svBlucutUltraThinAvailable = is167UltraThinAvailable('BLUCUT_1_67', 'singleVision');
+        hasUltraThinUpgrade = true;
+        ultraThinCoatingInfo = {
+          key: 'forUltraThin',
+          available: svBlucutUltraThinAvailable,
+          price: 1200,
+          name: '1.67 Ultra Thin Index',
+          icon: '🔬',
+          desc: svBlucutUltraThinAvailable ? 'Thinner & lighter lenses' : 'Not available for this power'
         };
       }
     }
@@ -1334,8 +1391,8 @@ const PrescriptionForm = ({
       }
     }
     
-    // Check if this lens has additional coatings available OR polycarbonate upgrade OR photochromic upgrade
-    if ((lensOption.additionalCoatings && Object.keys(lensOption.additionalCoatings).length > 0) || hasPolyUpgrade || hasPhotochromicUpgrade) {
+    // Check if this lens has additional coatings available OR polycarbonate upgrade OR photochromic/ultraThin upgrade
+    if ((lensOption.additionalCoatings && Object.keys(lensOption.additionalCoatings).length > 0) || hasPolyUpgrade || hasPhotochromicUpgrade || hasUltraThinUpgrade) {
       console.log('Showing coatings popup');
       
       // Combine regular coatings with polycarbonate and photochromic upgrades if applicable
@@ -1348,6 +1405,10 @@ const PrescriptionForm = ({
       
       if (hasPhotochromicUpgrade && photochromicCoatingInfo) {
         extraInfo.photochromicCoatingInfo = photochromicCoatingInfo;
+      }
+      
+      if (hasUltraThinUpgrade && ultraThinCoatingInfo) {
+        extraInfo.ultraThinCoatingInfo = ultraThinCoatingInfo;
       }
       
       setPendingLensSelection({ ...lensOption, ...extraInfo });
@@ -1440,6 +1501,10 @@ const PrescriptionForm = ({
           // Handle photochromic upgrade
           totalAdditionalCost += pendingLensSelection.photochromicCoatingInfo.price;
           coatingNames.push('Photochromic');
+        } else if (coatingKey === 'forUltraThin' && pendingLensSelection.ultraThinCoatingInfo) {
+          // Handle 1.67 ultra thin upgrade
+          totalAdditionalCost += pendingLensSelection.ultraThinCoatingInfo.price;
+          coatingNames.push('1.67 Ultra Thin');
         } else if (pendingLensSelection.additionalCoatings && pendingLensSelection.additionalCoatings[coatingKey]) {
           // Handle regular coatings
           totalAdditionalCost += pendingLensSelection.additionalCoatings[coatingKey];
@@ -2469,15 +2534,7 @@ const PrescriptionForm = ({
                 Work Friendly
               </button>
             )}
-            {isHighPowerNeeded() && (
-              <button 
-                className={`filter-btn ${lensFilter === 'high-power' ? 'active' : ''}`}
-                onClick={() => setLensFilter('high-power')}
-              >
-                <span className="filter-icon">👓</span>
-                High Power
-              </button>
-            )}
+
           </div>
 
           {/* Lens Cards - Dynamically render based on selected frame */}
@@ -2514,7 +2571,7 @@ const PrescriptionForm = ({
               return (
               <div 
                 key={index} 
-                className={`lens-card ${selectedLens?.type === lensOption.type && selectedLens?.isHighPower === lensOption.isHighPower ? 'selected' : ''} ${isPremium ? 'premium-card' : ''} ${isBasicHardCoat ? 'basic-hard-coat' : ''}`}
+                className={`lens-card ${selectedLens?.type === lensOption.type ? 'selected' : ''} ${isPremium ? 'premium-card' : ''} ${isBasicHardCoat ? 'basic-hard-coat' : ''}`}
                 onClick={() => handleLensSelection(lensOption)}
                 style={{
                   cursor: 'pointer',
@@ -2549,20 +2606,14 @@ const PrescriptionForm = ({
                 )}
                 <div className="lens-card-header">
                   <div>
-                    {lensOption.type === 'BLU-CUT/BLU-GREEN' && !lensOption.isHighPower && (
+                    {lensOption.type === 'BLU-CUT/BLU-GREEN' && (
                       <span className="lens-badge">Screen Friendly</span>
                     )}
-                    {lensOption.type === 'BLU-CUT PREMIUM/NVG' && !lensOption.isHighPower && (
+                    {lensOption.type === 'BLU-CUT PREMIUM/NVG' && (
                       <span className="lens-badge premium">Designed in Italy</span>
                     )}
                     <div style={{display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap'}}>
                       <h3 className="lens-card-title" style={isPremium ? {color: '#92400e', fontWeight: '700'} : {}}>{lensOption.type}</h3>
-                      {lensOption.isHighPower && (
-                        <>
-                          <span className="lens-badge high-power">HIGH POWER</span>
-                          <span style={{fontSize: '14px', color: '#64748b', fontWeight: '500'}}>Ultra Thin lens</span>
-                        </>
-                      )}
                     </div>
                   </div>
                   <button className="lens-detail-arrow" style={isPremium ? {color: '#f59e0b'} : {}}>›</button>
@@ -2713,6 +2764,37 @@ const PrescriptionForm = ({
                     </div>
                   )}
                   
+                  {/* 1.67 Ultra Thin upgrade option if available */}
+                  {pendingLensSelection.ultraThinCoatingInfo && (
+                    <div 
+                      key={pendingLensSelection.ultraThinCoatingInfo.key}
+                      className={`coating-option ${selectedCoatings.includes(pendingLensSelection.ultraThinCoatingInfo.key) ? 'selected' : ''} ${
+                        (selectedCoatings.length > 0 && !selectedCoatings.includes(pendingLensSelection.ultraThinCoatingInfo.key)) ||
+                        !pendingLensSelection.ultraThinCoatingInfo.available ? 'disabled' : ''
+                      }`}
+                      onClick={() => {
+                        if (pendingLensSelection.ultraThinCoatingInfo.available &&
+                            (selectedCoatings.length === 0 || selectedCoatings.includes(pendingLensSelection.ultraThinCoatingInfo.key))) {
+                          handleCoatingToggle(pendingLensSelection.ultraThinCoatingInfo.key);
+                        }
+                      }}
+                    >
+                      <div className="coating-option-header">
+                        <div className="coating-checkbox">
+                          {selectedCoatings.includes(pendingLensSelection.ultraThinCoatingInfo.key) && <span className="checkmark">✓</span>}
+                        </div>
+                        <div className="coating-icon">{pendingLensSelection.ultraThinCoatingInfo.icon}</div>
+                        <div className="coating-details">
+                          <div className="coating-name">{pendingLensSelection.ultraThinCoatingInfo.name}</div>
+                          <div className="coating-desc">{pendingLensSelection.ultraThinCoatingInfo.desc}</div>
+                        </div>
+                      </div>
+                      <div className="coating-price">
+                        {pendingLensSelection.ultraThinCoatingInfo.available ? `+₹${pendingLensSelection.ultraThinCoatingInfo.price}` : 'N/A'}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Polycarbonate upgrade option if available */}
                   {pendingLensSelection.polyCoatingInfo && (
                     <div 
@@ -2753,6 +2835,8 @@ const PrescriptionForm = ({
                           return sum + pendingLensSelection.polyCoatingInfo.price;
                         } else if (key === 'forPhotochromic' && pendingLensSelection.photochromicCoatingInfo) {
                           return sum + pendingLensSelection.photochromicCoatingInfo.price;
+                        } else if (key === 'forUltraThin' && pendingLensSelection.ultraThinCoatingInfo) {
+                          return sum + pendingLensSelection.ultraThinCoatingInfo.price;
                         } else if (pendingLensSelection.additionalCoatings && pendingLensSelection.additionalCoatings[key]) {
                           return sum + pendingLensSelection.additionalCoatings[key];
                         }
@@ -4450,3 +4534,4 @@ const PrescriptionForm = ({
 };
 
 export default PrescriptionForm;
+
