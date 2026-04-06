@@ -325,6 +325,17 @@ const PrescriptionForm = ({
 
   // Check if 1.67 index lens is available for both eyes (ARC_1_67 or BLUCUT_1_67)
   const is167UltraThinAvailable = (coatingCode, lensCategory) => {
+    // Only show 1.67 upgrade when at least one eye's SPH is more than -3.75 (i.e., < -3.75)
+    let rightSph, leftSph;
+    if (requiresAdd) {
+      rightSph = parseFloat(prescriptionData.rightEye.dv?.sph) || 0;
+      leftSph = parseFloat(prescriptionData.leftEye.dv?.sph) || 0;
+    } else {
+      rightSph = parseFloat(prescriptionData.rightEye.sph) || 0;
+      leftSph = parseFloat(prescriptionData.leftEye.sph) || 0;
+    }
+    if (rightSph >= -3.75 && leftSph >= -3.75) return false;
+
     let results;
     if (lensCategory === 'bifocal') {
       results = matchedResults?.bifocal;
